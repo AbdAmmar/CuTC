@@ -1,9 +1,9 @@
 
 
-__global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
-                          double *r1, double *r2, double *rn,
-                          double *c_bh, int *m_bh, int *n_bh, int *o_bh,
-                          double *grad1_u12) {
+__global__ void tc_int_bh_kernel(int n_grid1, int n_grid2, int n_nuc, int size_bh,
+                                 double *r1, double *r2, double *rn,
+                                 double *c_bh, int *m_bh, int *n_bh, int *o_bh,
+                                 double *grad1_u12) {
 
     /*
         grad1_u12[1] =      [grad1 u(r1,r2)]_x1
@@ -189,27 +189,70 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
 
 }
 
-// extern "C" void kernel_wrapper_(int *n_grid1, int *n_grid2, int *ao_num, int *n_nuc,
-//                                 double *h_r1, double *h_r2, double *h_rn,
-//                                 double *h_aos_data1, double *h_aos_data2,
-//                                 int *n_bh, double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh,
-//                                 double *h_int2_grad1_u12, double *h_tc_int_2e_ao)
 
-int main(void) {
+// int tc_int_bh(void) {
 
-    int n_grid1, n_grid2; 
-    //int ao_num;
-    int n_nuc;
-    int n_bh;
+    //int n_grid1, n_grid2; 
+    ////int ao_num;
+    //int n_nuc;
+    //int size_bh;
 
-    int *h_m_bh, *h_n_bh, *h_o_bh;
-    double *h_c_bh; 
+    //int *h_m_bh, *h_n_bh, *h_o_bh;
+    //double *h_c_bh; 
 
-    double *h_r1, *h_r2, *h_rn;
-    //double *h_aos_data1, *h_aos_data2;
+    //double *h_r1, *h_r2, *h_rn;
+    ////double *h_aos_data1, *h_aos_data2;
 
-    //double *h_int2_grad1_u12;
-    //double *h_tc_int_2e_ao;
+    ////double *h_int2_grad1_u12;
+    ////double *h_tc_int_2e_ao;
+
+    //int i, j;
+
+    //// ao_num  = 50;
+    //n_grid1 = 1000;
+    //n_grid2 = 10000;
+    //n_nuc = 5;
+    //size_bh = 10;
+
+    //h_r1 = (double*) malloc(size_r1);
+    //h_r2 = (double*) malloc(size_r2);
+    //h_rn = (double*) malloc(size_rn);
+
+    //h_c_bh = (double*) malloc(size_jbh1);
+    //h_m_bh = (int*) malloc(size_jbh2);
+    //h_n_bh = (int*) malloc(size_jbh2);
+    //h_o_bh = (int*) malloc(size_jbh2);
+
+    //for(i = 0; i < n_grid1; i++) {
+    //    h_r1[i          ] = 0.1;
+    //    h_r1[i+  n_grid1] = 0.1;
+    //    h_r1[i+2*n_grid1] = 0.1;
+    //}
+    //for(i = 0; i < n_grid2; i++) {
+    //    h_r2[i          ] = 0.2;
+    //    h_r2[i+  n_grid2] = 0.2;
+    //    h_r2[i+2*n_grid2] = 0.2;
+    //}
+    //for(i = 0; i < n_nuc; i++) {
+    //    h_rn[i        ] = 0.3;
+    //    h_rn[i+  n_nuc] = 0.3;
+    //    h_rn[i+2*n_nuc] = 0.3;
+    //}
+    //for (j = 0; j < n_nuc; j++) {
+    //    for (i = 0; i < size_bh; i++) {
+    //        h_c_bh[i + j*n_nuc] = 0.5;
+    //        h_m_bh[i + j*n_nuc] = 2;
+    //        h_n_bh[i + j*n_nuc] = 3;
+    //        h_o_bh[i + j*n_nuc] = 4;
+    //    }
+    //}
+
+
+extern "C" void tc_int_bh(int n_grid1, int n_grid2, int ao_num, int n_nuc, int size_bh,
+                          int *h_m_bh, int *h_n_bh, int *h_o_bh, double *h_c_bh,
+                          double *h_r1, double *h_r2, double *h_rn,
+                          double *h_aos_data1, double *h_aos_data2,
+                          double *h_int2_grad1_u12, double *h_tc_int_2e_ao) {
 
     int *d_m_bh, *d_n_bh, *d_o_bh;
     double *d_c_bh; 
@@ -217,6 +260,7 @@ int main(void) {
     double *d_r1, *d_r2, *d_rn;
 
     //double *d_aos_data1, *d_aos_data2;
+
 
     double *d_grad1_u12;
     //double *d_int2_grad1_u12;
@@ -230,14 +274,6 @@ int main(void) {
 
     int threadsPerBlock, numBlocks;
 
-    int i, j;
-
-    // ao_num  = 50;
-    n_grid1 = 1000;
-    n_grid2 = 10000;
-    n_nuc = 5;
-    n_bh = 10;
-
     size_r1 = 3 * n_grid1 * sizeof(double);
     size_r2 = 3 * n_grid2 * sizeof(double);
     size_rn = 3 * n_nuc   * sizeof(double);
@@ -250,41 +286,9 @@ int main(void) {
     //size_int1 = 4 * n_grid2 * ao_num * ao_num * sizeof(double);
     //size_int2 = ao_num * ao_num * ao_num * ao_num * sizeof(double);
 
-    size_jbh1 = n_bh * sizeof(double);
-    size_jbh2 = n_bh * sizeof(int);
+    size_jbh1 = size_bh * sizeof(double);
+    size_jbh2 = size_bh * sizeof(int);
 
-    h_r1 = (double*) malloc(size_r1);
-    h_r2 = (double*) malloc(size_r2);
-    h_rn = (double*) malloc(size_rn);
-
-    h_c_bh = (double*) malloc(size_jbh1);
-    h_m_bh = (int*) malloc(size_jbh2);
-    h_n_bh = (int*) malloc(size_jbh2);
-    h_o_bh = (int*) malloc(size_jbh2);
-
-    for(i = 0; i < n_grid1; i++) {
-        h_r1[i          ] = 0.1;
-        h_r1[i+  n_grid1] = 0.1;
-        h_r1[i+2*n_grid1] = 0.1;
-    }
-    for(i = 0; i < n_grid2; i++) {
-        h_r2[i          ] = 0.2;
-        h_r2[i+  n_grid2] = 0.2;
-        h_r2[i+2*n_grid2] = 0.2;
-    }
-    for(i = 0; i < n_nuc; i++) {
-        h_rn[i        ] = 0.3;
-        h_rn[i+  n_nuc] = 0.3;
-        h_rn[i+2*n_nuc] = 0.3;
-    }
-    for (j = 0; j < n_nuc; j++) {
-        for (i = 0; i < n_bh; i++) {
-            h_c_bh[i + j*n_nuc] = 0.5;
-            h_m_bh[i + j*n_nuc] = 2;
-            h_n_bh[i + j*n_nuc] = 3;
-            h_o_bh[i + j*n_nuc] = 4;
-        }
-    }
 
     cudaMalloc(&d_r1, size_r1);
     cudaMalloc(&d_r2, size_r2);
@@ -319,10 +323,10 @@ int main(void) {
     threadsPerBlock = 16;
     numBlocks = (n_grid1 + threadsPerBlock - 1) / threadsPerBlock;
 
-    tc_int_bh<<<numBlocks, threadsPerBlock>>>(n_grid1, n_grid2, n_nuc, n_bh,
-                                              d_r1, d_r2, d_rn,
-                                              d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                                              d_grad1_u12);
+    tc_int_bh_kernel<<<numBlocks, threadsPerBlock>>>(n_grid1, n_grid2, n_nuc, size_bh,
+                                                     d_r1, d_r2, d_rn,
+                                                     d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                                                     d_grad1_u12);
 
 
 
@@ -332,7 +336,6 @@ int main(void) {
     cudaFree(d_r2);
     cudaFree(d_rn);
 
-    return 0;
 }
 
 
