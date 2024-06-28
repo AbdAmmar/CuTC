@@ -38,19 +38,19 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
 
     if(i_grid1 < n_grid1) {
 
-        r1_x = r1[i_grid1][1];
-        r1_y = r1[i_grid1][2];
-        r1_z = r1[i_grid1][3];
+        r1_x = r1[i_grid1          ];
+        r1_y = r1[i_grid1+  n_grid1];
+        r1_z = r1[i_grid1+2*n_grid1];
 
         for(i_grid2 = 0; i_grid2 < n_grid2; i_grid2++) {
 
-            grad1_u12[i_grid1][i_grid2][1] = 0.0;
-            grad1_u12[i_grid1][i_grid2][2] = 0.0;
-            grad1_u12[i_grid1][i_grid2][3] = 0.0;
+            grad1_u12[i_grid1*n_grid1+i_grid2          ] = 0.0;
+            grad1_u12[i_grid1*n_grid1+i_grid2+  n_grid2] = 0.0;
+            grad1_u12[i_grid1*n_grid1+i_grid2+2*n_grid2] = 0.0;
 
-            r2_x = r2[i_grid2][1];
-            r2_y = r2[i_grid2][2];
-            r2_z = r2[i_grid2][3];
+            r2_x = r2[i_grid2          ];
+            r2_y = r2[i_grid2+  n_grid2];
+            r2_z = r2[i_grid2+2*n_grid2];
 
             // e1-e2 term
             dx = r1_x - r2_x;
@@ -74,9 +74,9 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
             
             for(i_nuc = 0; i_nuc < n_nuc; i_nuc++) {
 
-                rn_x = rn[i_nuc][1];
-                rn_y = rn[i_nuc][2];
-                rn_z = rn[i_nuc][3];
+                rn_x = rn[i_nuc        ];
+                rn_y = rn[i_nuc+  n_nuc];
+                rn_z = rn[i_nuc+2*n_nuc];
 
                 // e1-n term
                 dx = r1_x - rn_x;
@@ -112,13 +112,13 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
 
                 for(i_bh = 0; i_bh < size_bh; i_bh++) {
 
-                    c = c_bh[i_nuc][i_bh];
+                    c = c_bh[i_bh + size_bh*i_nuc];
                     if(fabs(c) < 1e-10)
                         break;
 
-                    m = m_bh[i_nuc][i_bh];
-                    n = n_bh[i_nuc][i_bh];
-                    o = o_bh[i_nuc][i_bh];
+                    m = m_bh[i_bh + size_bh*i_nuc];
+                    n = n_bh[i_bh + size_bh*i_nuc];
+                    o = o_bh[i_bh + size_bh*i_nuc];
 
                     // TODO remove
                     if(m == n)
@@ -152,9 +152,9 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
                     tmp2 = 0.0;
 
                     if(m > 0)
-                        tmp1 += (double()m) * f1n_mm1 * f2n_n;
+                        tmp1 += __int2double_rn(m) * f1n_mm1 * f2n_n;
                     if(n > 0)
-                        tmp1 += (double()n) * f1n_nm1 * f2n_m;
+                        tmp1 += __int2double_rn(n) * f1n_nm1 * f2n_m;
 
                     if(o > 0) {
                         g12_om1 = 1.0;
@@ -163,15 +163,15 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
                         }
                         g12_o = g12_om1 * g12;
 
-                        tmp2 = c * (double()o) * g12_om1 * (f1n_m * f2n_n + f1n_n * f2n_m);
+                        tmp2 = c * __int2double_rn(o) * g12_om1 * (f1n_m * f2n_n + f1n_n * f2n_m);
                         tmp1 = c * tmp1 * g12_o;
                     } else {
                         tmp1 *= c;
                     }
 
-                    grad1_u12[i_grid1][i_grid2][1] += tmp1 * f1nx + tmp2 * g12x;
-                    grad1_u12[i_grid1][i_grid2][2] += tmp1 * f1ny + tmp2 * g12y;
-                    grad1_u12[i_grid1][i_grid2][3] += tmp1 * f1nz + tmp2 * g12z;
+                    grad1_u12[i_grid1*n_grid1+i_grid2          ] += tmp1 * f1nx + tmp2 * g12x;
+                    grad1_u12[i_grid1*n_grid1+i_grid2+  n_grid2] += tmp1 * f1ny + tmp2 * g12y;
+                    grad1_u12[i_grid1*n_grid1+i_grid2+2*n_grid2] += tmp1 * f1nz + tmp2 * g12z;
 
                 } // i_bh
 
@@ -180,12 +180,159 @@ __global__ void tc_int_bh(int n_grid1, int n_grid2, int n_nuc, int size_bh,
         } // i_grid2
 
         for(i_grid2 = 0; i_grid2 < n_grid2; i_grid2++) {
-            grad1_u12[i_grid1][i_grid2][4] = -0.5 * ( grad1_u12[i_grid1][i_grid2][1] * grad1_u12[i_grid1][i_grid2][1] 
-                                                    + grad1_u12[i_grid1][i_grid2][2] * grad1_u12[i_grid1][i_grid2][2] 
-                                                    + grad1_u12[i_grid1][i_grid2][3] * grad1_u12[i_grid1][i_grid2][3] ) ;
+            grad1_u12[i_grid1*n_grid1+i_grid2+3*n_grid2] = -0.5 * ( grad1_u12[i_grid1*n_grid1+i_grid2          ] * grad1_u12[i_grid1*n_grid1+i_grid2          ] 
+                                                                  + grad1_u12[i_grid1*n_grid1+i_grid2+  n_grid2] * grad1_u12[i_grid1*n_grid1+i_grid2+  n_grid2] 
+                                                                  + grad1_u12[i_grid1*n_grid1+i_grid2+2*n_grid2] * grad1_u12[i_grid1*n_grid1+i_grid2+2*n_grid2] ) ;
         }
 
     } // i_grid1
 
 }
+
+// extern "C" void kernel_wrapper_(int *n_grid1, int *n_grid2, int *ao_num, int *n_nuc,
+//                                 double *h_r1, double *h_r2, double *h_rn,
+//                                 double *h_aos_data1, double *h_aos_data2,
+//                                 int *n_bh, double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh,
+//                                 double *h_int2_grad1_u12, double *h_tc_int_2e_ao)
+
+int main(void) {
+
+    int n_grid1, n_grid2; 
+    //int ao_num;
+    int n_nuc;
+    int n_bh;
+
+    int *h_m_bh, *h_n_bh, *h_o_bh;
+    double *h_c_bh; 
+
+    double *h_r1, *h_r2, *h_rn;
+    //double *h_aos_data1, *h_aos_data2;
+
+    //double *h_int2_grad1_u12;
+    //double *h_tc_int_2e_ao;
+
+    int *d_m_bh, *d_n_bh, *d_o_bh;
+    double *d_c_bh; 
+
+    double *d_r1, *d_r2, *d_rn;
+
+    //double *d_aos_data1, *d_aos_data2;
+
+    double *d_grad1_u12;
+    //double *d_int2_grad1_u12;
+    //double *d_tc_int_2e_ao;
+
+    size_t size_r1, size_r2, size_rn;
+    //size_t size_aos_r1, size_aos_r2;
+    size_t size_r12;
+    //size_t size_int1, size_int2;
+    size_t size_jbh1, size_jbh2;
+
+    int threadsPerBlock, numBlocks;
+
+    int i, j;
+
+    // ao_num  = 50;
+    n_grid1 = 1000;
+    n_grid2 = 10000;
+    n_nuc = 5;
+    n_bh = 10;
+
+    size_r1 = 3 * n_grid1 * sizeof(double);
+    size_r2 = 3 * n_grid2 * sizeof(double);
+    size_rn = 3 * n_nuc   * sizeof(double);
+
+    size_r12 = 4 * n_grid1 * n_grid2 * sizeof(double);
+
+    //size_aos_r1 = 4 * n_grid1 * ao_num * sizeof(double);
+    //size_aos_r2 = 4 * n_grid2 * ao_num * sizeof(double);
+
+    //size_int1 = 4 * n_grid2 * ao_num * ao_num * sizeof(double);
+    //size_int2 = ao_num * ao_num * ao_num * ao_num * sizeof(double);
+
+    size_jbh1 = n_bh * sizeof(double);
+    size_jbh2 = n_bh * sizeof(int);
+
+    h_r1 = (double*) malloc(size_r1);
+    h_r2 = (double*) malloc(size_r2);
+    h_rn = (double*) malloc(size_rn);
+
+    h_c_bh = (double*) malloc(size_jbh1);
+    h_m_bh = (int*) malloc(size_jbh2);
+    h_n_bh = (int*) malloc(size_jbh2);
+    h_o_bh = (int*) malloc(size_jbh2);
+
+    for(i = 0; i < n_grid1; i++) {
+        h_r1[i          ] = 0.1;
+        h_r1[i+  n_grid1] = 0.1;
+        h_r1[i+2*n_grid1] = 0.1;
+    }
+    for(i = 0; i < n_grid2; i++) {
+        h_r2[i          ] = 0.2;
+        h_r2[i+  n_grid2] = 0.2;
+        h_r2[i+2*n_grid2] = 0.2;
+    }
+    for(i = 0; i < n_nuc; i++) {
+        h_rn[i        ] = 0.3;
+        h_rn[i+  n_nuc] = 0.3;
+        h_rn[i+2*n_nuc] = 0.3;
+    }
+    for (j = 0; j < n_nuc; j++) {
+        for (i = 0; i < n_bh; i++) {
+            h_c_bh[i + j*n_nuc] = 0.5;
+            h_m_bh[i + j*n_nuc] = 2;
+            h_n_bh[i + j*n_nuc] = 3;
+            h_o_bh[i + j*n_nuc] = 4;
+        }
+    }
+
+    cudaMalloc(&d_r1, size_r1);
+    cudaMalloc(&d_r2, size_r2);
+    cudaMalloc(&d_rn, size_rn);
+
+    // cudaMalloc(&d_aos_data1, size_aos_r1);
+    // cudaMalloc(&d_aos_data2, size_aos_r2);
+
+    cudaMalloc(&d_grad1_u12, size_r12);
+
+    // cudaMalloc(&d_int2_grad1_u12, size_int1);
+    // cudaMalloc(&d_tc_int_2e_ao, size_int2);
+
+    cudaMalloc(&d_c_bh, size_jbh1);
+    cudaMalloc(&d_m_bh, size_jbh2);
+    cudaMalloc(&d_n_bh, size_jbh2);
+    cudaMalloc(&d_o_bh, size_jbh2);
+
+    cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice);
+
+    // cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
+    // cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
+
+    cudaMemcpy(d_c_bh, h_c_bh, size_jbh1, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_m_bh, h_m_bh, size_jbh2, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_n_bh, h_n_bh, size_jbh2, cudaMemcpyHostToDevice);
+    cudaMemcpy(d_o_bh, h_o_bh, size_jbh2, cudaMemcpyHostToDevice);
+
+
+    threadsPerBlock = 16;
+    numBlocks = (n_grid1 + threadsPerBlock - 1) / threadsPerBlock;
+
+    tc_int_bh<<<numBlocks, threadsPerBlock>>>(n_grid1, n_grid2, n_nuc, n_bh,
+                                              d_r1, d_r2, d_rn,
+                                              d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                                              d_grad1_u12);
+
+
+
+    //cudaMemcpy(h_int2_grad1_u12, d_int2_grad1_u12, size_int1, cudaMemcpyDeviceToHost);
+
+    cudaFree(d_r1);
+    cudaFree(d_r2);
+    cudaFree(d_rn);
+
+    return 0;
+}
+
 
