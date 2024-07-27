@@ -19,6 +19,10 @@ extern void int_long_range(int nBlocks, int blockSize,
                            int n_grid2, int ao_num, double *wr2, double* aos_data2,
                            double *int_fct_long_range);
 
+extern void int_short_range_herm(int nBlocks, int blockSize,
+                                 int n_grid1, int ao_num, double *wr1, double* aos_data1,
+                                 double *int_fct_short_range_herm);
+
 
 //int jast_der_c_(int nBlocks, int blockSize,
 int main(int nBlocks, int blockSize,
@@ -40,6 +44,8 @@ int main(int nBlocks, int blockSize,
 
 
     double *d_int_fct_long_range;
+    double *d_int_fct_short_range_herm;
+    double *d_int_fct_short_range_nonherm;
     double *d_grad1_u12;
     double *d_int2_grad1_u12;
     double *d_tc_int_2e_ao;
@@ -108,16 +114,17 @@ int main(int nBlocks, int blockSize,
               d_grad1_u12);
 
 
+
     cudaMalloc((void**)&d_aos_data2, size_aos_r2);
+
     cudaMalloc((void**)&d_int_fct_long_range, n_grid2*ao_num*ao_num*sizeof(double));
+
     cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
 
     int_long_range(nBlocks, blockSize, n_grid2, ao_num, d_wr2, d_aos_data2, d_int_fct_long_range);
     cudaDeviceSynchronize();
 
-    // TODO
-    // call cuBlas
-    // d_grad1_u12 x d_int_fct_long_range.T
+
     cudaMalloc((void**)&d_int2_grad1_u12, size_int1);
 
     cublasCreate(&handle);
@@ -140,15 +147,37 @@ int main(int nBlocks, int blockSize,
     cudaFree(d_int_fct_long_range);
 
 
+
+
     cudaMalloc((void**)&d_aos_data1, size_aos_r1);
+
+    cudaMalloc((void**)&d_int_fct_short_range_herm, n_grid1*ao_num*ao_num*sizeof(double));
+
     cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
+
+    int_short_range_herm(nBlocks, blockSize, n_grid1, ao_num, d_wr1, d_aos_data1, d_int_fct_short_range_herm);
+    cudaDeviceSynchronize();
+
 
     cudaMalloc((void**)&d_tc_int_2e_ao, size_int2);
 
 
+    cublasCreate(&handle);
 
-    // TODO
-    // kernel to compute d_int2_grad1_u12 & d_tc_int_2e_ao
+    cublasDgemm( handle
+               , CUBLAS_OP_N, CUBLAS_OP_N
+               , ao_num*ao_num, ao_num*ao_num, n_grid1
+               , &alpha
+               , &d_int2_grad1_u12[ao_num*ao_num*n_grid1*3], ao_num*ao_num
+               , &d_int_fct_short_range_herm[0], n_grid1
+               , &beta
+               , &d_tc_int_2e_ao[0], ao_num*ao_num );
+
+    cublasDestroy(handle);
+
+    cudaFree(d_int_fct_short_range_herm);
+
+
 
     cudaMemcpy(h_int2_grad1_u12, d_int2_grad1_u12, size_int1, cudaMemcpyDeviceToHost);
     cudaMemcpy(h_tc_int_2e_ao, d_tc_int_2e_ao, size_int2, cudaMemcpyDeviceToHost);

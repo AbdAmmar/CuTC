@@ -12,10 +12,10 @@ $(shell mkdir -p $(BIN_DIR))
 KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
 KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BIN_DIR)/%.o)
 
-MAIN_SRC = $(SRC_DIR)/jast_der_c.c
-MAIN_OBJ = $(BIN_DIR)/jast_der_c.o
+MAIN_SRC = $(SRC_DIR)/tc_int_c.c
+MAIN_OBJ = $(BIN_DIR)/tc_int_c.o
 
-TARGET = $(BIN_DIR)/jast_der_c
+TARGET = $(BIN_DIR)/tc_int_c
 
 CUDA_LIBS = -lcudart -lcublas
 CUDA_LIBDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/compilers/lib
