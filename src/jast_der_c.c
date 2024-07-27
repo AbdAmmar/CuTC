@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <cublas_v2.h>
+
 
 
 extern void tc_int_bh(int nBlocks, int blockSize,
@@ -14,8 +16,7 @@ extern void tc_int_bh(int nBlocks, int blockSize,
 
 
 extern void int_long_range(int nBlocks, int blockSize,
-                           int n_grid2, int ao_num,
-                           double *r2, double *wr2, double* aos_data2,
+                           int n_grid2, int ao_num, double *wr2, double* aos_data2,
                            double *int_fct_long_range);
 
 
@@ -49,6 +50,13 @@ int main(int nBlocks, int blockSize,
     size_t size_r12;
     size_t size_int1, size_int2;
     size_t size_jbh_d, size_jbh_i;
+
+
+    int m;
+    double alpha, beta;
+
+
+    cublasHandle_t handle;
 
 
     size_r1 = 3 * n_grid1 * sizeof(double);
@@ -104,16 +112,37 @@ int main(int nBlocks, int blockSize,
     cudaMalloc((void**)&d_int_fct_long_range, n_grid2*ao_num*ao_num*sizeof(double));
     cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
 
-    int_long_range(nBlocks, blockSize, n_grid2, ao_num, d_r2, d_wr2, d_aos_data2, d_int_fct_long_range);
+    int_long_range(nBlocks, blockSize, n_grid2, ao_num, d_wr2, d_aos_data2, d_int_fct_long_range);
+    cudaDeviceSynchronize();
 
     // TODO
     // call cuBlas
+    // d_grad1_u12 x d_int_fct_long_range.T
+    cudaMalloc((void**)&d_int2_grad1_u12, size_int1);
+
+    cublasCreate(&handle);
+
+    alpha = 1.0;
+    beta = 0.0;
+    for (m = 0; m < 4; m++) {
+        cublasDgemm( handle
+                   , CUBLAS_OP_T, CUBLAS_OP_N
+                   , ao_num*ao_num, n_grid1, n_grid2
+                   , &alpha
+                   , &d_int_fct_long_range[0], n_grid2
+                   , &d_grad1_u12[0], n_grid2
+                   , &beta
+                   , &d_int2_grad1_u12[ao_num*ao_num*n_grid1*m], ao_num*ao_num );
+    }
+
+    cublasDestroy(handle);
+
+    cudaFree(d_int_fct_long_range);
 
 
     cudaMalloc((void**)&d_aos_data1, size_aos_r1);
     cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
 
-    cudaMalloc((void**)&d_int2_grad1_u12, size_int1);
     cudaMalloc((void**)&d_tc_int_2e_ao, size_int2);
 
 

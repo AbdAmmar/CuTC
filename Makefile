@@ -3,7 +3,7 @@ NVCC = nvcc
 NFLAG =
 
 CC = gcc
-CFLAG = -O3 -Wall #-O0 -g -ggdb
+CFLAG = -O3 # -Wall #-O0 -g -ggdb
 
 SRC_DIR = src
 BIN_DIR = bin
@@ -17,15 +17,16 @@ MAIN_OBJ = $(BIN_DIR)/jast_der_c.o
 
 TARGET = $(BIN_DIR)/jast_der_c
 
-CUDA_LIBS = -lcudart
+CUDA_LIBS = -lcudart -lcublas
 CUDA_LIBDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/compilers/lib
 CUDA_INCDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/compilers/include
+CUBLAS_LIBDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/math_libs/11.8/targets/x86_64-linux/lib
 
 
 all: $(TARGET)
 
 $(TARGET): $(KERNEL_OBJ) $(MAIN_OBJ)
-	$(NVCC) $(NFLAG) $^ -o $@ $(CUDA_LIBS) -L$(CUDA_LIBDIR)
+	$(NVCC) $(NFLAG) $^ -o $@ $(CUDA_LIBS) -L$(CUDA_LIBDIR) -L$(CUBLAS_LIBDIR)
 
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.cu
 	$(NVCC) $(NFLAG) -c $< -o $@
