@@ -13,6 +13,12 @@ extern void tc_int_bh(int nBlocks, int blockSize,
                       double *grad1_u12);
 
 
+extern void int_long_range(int nBlocks, int blockSize,
+                           int n_grid2, int ao_num,
+                           double *r2, double *wr2, double* aos_data2,
+                           double *int_fct_long_range);
+
+
 //int jast_der_c_(int nBlocks, int blockSize,
 int main(int nBlocks, int blockSize,
          int n_grid1, int n_grid2, int ao_num, int n_nuc, int size_bh,
@@ -32,6 +38,7 @@ int main(int nBlocks, int blockSize,
     int *d_m_bh, *d_n_bh, *d_o_bh;
 
 
+    double *d_int_fct_long_range;
     double *d_grad1_u12;
     double *d_int2_grad1_u12;
     double *d_tc_int_2e_ao;
@@ -93,16 +100,21 @@ int main(int nBlocks, int blockSize,
               d_grad1_u12);
 
 
-    cudaMalloc((void**)&d_aos_data1, size_aos_r1);
     cudaMalloc((void**)&d_aos_data2, size_aos_r2);
+    cudaMalloc((void**)&d_int_fct_long_range, n_grid2*ao_num*ao_num*sizeof(double));
+    cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
+
+    int_long_range(nBlocks, blockSize, n_grid2, ao_num, d_r2, d_wr2, d_aos_data2, d_int_fct_long_range);
+
+    // TODO
+    // call cuBlas
+
+
+    cudaMalloc((void**)&d_aos_data1, size_aos_r1);
+    cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
 
     cudaMalloc((void**)&d_int2_grad1_u12, size_int1);
     cudaMalloc((void**)&d_tc_int_2e_ao, size_int2);
-
-    cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
-
-
 
 
 
@@ -114,8 +126,12 @@ int main(int nBlocks, int blockSize,
 
 
     cudaFree(d_r1);
+    cudaFree(d_wr1);
     cudaFree(d_r2);
+    cudaFree(d_wr2);
     cudaFree(d_rn);
+    cudaFree(d_aos_data1);
+    cudaFree(d_aos_data2);
     cudaFree(d_c_bh);
     cudaFree(d_m_bh);
     cudaFree(d_n_bh);

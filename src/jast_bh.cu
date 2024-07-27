@@ -35,7 +35,7 @@ __global__ void tc_int_bh_kernel(int n_grid1, int n_grid2, int n_nuc, int size_b
     double tmp1, tmp2;
 
 
-    i_grid1 = blockIdx.x * blockDim.x + threadIdx.x ;
+    i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
 
     while(i_grid1 < n_grid1) {
 
