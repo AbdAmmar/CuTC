@@ -5,6 +5,7 @@ __global__ void int_short_range_herm_kernel(int n_grid1, int ao_num, double *wr1
 
     int i_grid1;
     int i_ao, j_ao;
+    int ii_ao, jj_ao;
     int ll0, ll1, ll2;
 
     double wr1_tmp;
@@ -21,15 +22,17 @@ __global__ void int_short_range_herm_kernel(int n_grid1, int ao_num, double *wr1
 
         for(i_ao = 0; i_ao < ao_num; i_ao++) {
 
-            ll1 = i_ao * ll0;
+            ll1 = i_grid1 + i_ao * ll0;
 
-            ao_val_i = aos_data1[i_ao];
+            ii_ao = i_grid1 + n_grid1 * i_ao;
+            ao_val_i = aos_data1[ii_ao];
 
             for(j_ao = 0; j_ao < ao_num; j_ao++) {
 
-                ll2 = i_grid1 + j_ao * n_grid1 + ll1;
+                ll2 = ll1 + j_ao * n_grid1;
 
-                ao_val_j = aos_data1[j_ao];
+                jj_ao = i_grid1 + n_grid1 * j_ao;
+                ao_val_j = aos_data1[jj_ao];
 
                 int_fct_short_range_herm[ll2] = wr1_tmp * ao_val_i * ao_val_j;
 

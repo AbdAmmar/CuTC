@@ -24,6 +24,12 @@ extern void int_short_range_herm(int nBlocks, int blockSize,
                                  double *int_fct_short_range_herm);
 
 
+extern void int_short_range_nonherm(int nBlocks, int blockSize,
+                                    int n_grid1, int ao_num, double *wr1, double* aos_data1,
+                                    double *int_fct_short_range_nonherm);
+
+
+
 //int jast_der_c_(int nBlocks, int blockSize,
 int main(int nBlocks, int blockSize,
          int n_grid1, int n_grid2, int ao_num, int n_nuc, int size_bh,
@@ -176,6 +182,29 @@ int main(int nBlocks, int blockSize,
     cublasDestroy(handle);
 
     cudaFree(d_int_fct_short_range_herm);
+
+
+
+    cudaMalloc((void**)&d_int_fct_short_range_nonherm, 3*n_grid1*ao_num*ao_num*sizeof(double));
+    int_short_range_nonherm(nBlocks, blockSize, n_grid1, ao_num, d_wr1, d_aos_data1, d_int_fct_short_range_nonherm);
+
+
+    cublasCreate(&handle);
+
+    alpha = -1.0;
+    beta = 1.0;
+    cublasDgemm( handle
+               , CUBLAS_OP_N, CUBLAS_OP_N
+               , ao_num*ao_num, ao_num*ao_num, 3*n_grid1
+               , &alpha
+               , &d_int2_grad1_u12[0], ao_num*ao_num
+               , &d_int_fct_short_range_nonherm[0], 3*n_grid1
+               , &beta
+               , &d_tc_int_2e_ao[0], ao_num*ao_num );
+
+    cublasDestroy(handle);
+
+    cudaFree(d_int_fct_short_range_nonherm);
 
 
 
