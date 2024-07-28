@@ -7,17 +7,11 @@
 #include <cublas_v2.h>
 
 
-
-extern void tc_int_bh(int nBlocks, int blockSize,
-                      int n_grid1, int n_grid2, int n_nuc, int size_bh,
-                      double *r1, double *r2, double *rn, 
-                      double *c_bh, int *m_bh, int *n_bh, int *o_bh,
-                      double *grad1_u12);
-
-
-extern void int_long_range(int nBlocks, int blockSize,
-                           int n_grid2, int ao_num, double *wr2, double* aos_data2,
-                           double *int_fct_long_range);
+extern void get_int2_grad1_u12(int nBlocks, int blockSize,
+                               int n_grid1, int n_grid2, int ao_num, int n_nuc, int size_bh,
+                               double *r1, double *r2, double *wr2, double *rn, double *aos_data2,
+                               double *c_bh, int *m_bh, int *n_bh, int *o_bh,
+                               double *int2_grad1_u12);
 
 extern void int_short_range_herm(int nBlocks, int blockSize,
                                  int n_grid1, int ao_num, double *wr1, double* aos_data1,
@@ -49,7 +43,6 @@ int main(int nBlocks, int blockSize,
     int *d_m_bh, *d_n_bh, *d_o_bh;
 
 
-    double *d_int_fct_long_range;
     double *d_int_fct_short_range_herm;
     double *d_int_fct_short_range_nonherm;
     double *d_grad1_u12;
@@ -101,6 +94,10 @@ int main(int nBlocks, int blockSize,
     cudaMalloc((void**)&d_n_bh, size_jbh_i);
     cudaMalloc((void**)&d_o_bh, size_jbh_i);
 
+    cudaMalloc((void**)&d_aos_data2, size_aos_r2);
+
+    cudaMalloc((void**)&d_int2_grad1_u12, size_int1);
+
     cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice);
     cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice);
     cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice);
@@ -112,45 +109,15 @@ int main(int nBlocks, int blockSize,
     cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice);
     cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice);
 
-
-    tc_int_bh(nBlocks, blockSize,
-              n_grid1, n_grid2, n_nuc, size_bh,
-              d_r1, d_r2, d_rn,
-              d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-              d_grad1_u12);
-
-
-
-    cudaMalloc((void**)&d_aos_data2, size_aos_r2);
-
-    cudaMalloc((void**)&d_int_fct_long_range, n_grid2*ao_num*ao_num*sizeof(double));
-
     cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
 
-    int_long_range(nBlocks, blockSize, n_grid2, ao_num, d_wr2, d_aos_data2, d_int_fct_long_range);
-    cudaDeviceSynchronize();
 
+    get_int2_grad1_u12(nBlocks, blockSize,
+                       n_grid1, n_grid2, ao_num, n_nuc, size_bh,
+                       d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
+                       d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                       d_int2_grad1_u12);
 
-    cudaMalloc((void**)&d_int2_grad1_u12, size_int1);
-
-    cublasCreate(&handle);
-
-    alpha = 1.0;
-    beta = 0.0;
-    for (m = 0; m < 4; m++) {
-        cublasDgemm( handle
-                   , CUBLAS_OP_T, CUBLAS_OP_N
-                   , ao_num*ao_num, n_grid1, n_grid2
-                   , &alpha
-                   , &d_int_fct_long_range[0], n_grid2
-                   , &d_grad1_u12[0], n_grid2
-                   , &beta
-                   , &d_int2_grad1_u12[ao_num*ao_num*n_grid1*m], ao_num*ao_num );
-    }
-
-    cublasDestroy(handle);
-
-    cudaFree(d_int_fct_long_range);
 
 
 
