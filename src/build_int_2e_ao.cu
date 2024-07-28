@@ -6,7 +6,7 @@
 
 
 extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
-                              int n_grid1, int ao_num, double *wr1, double *aos_data1,
+                              int n_grid1, int n_ao, double *wr1, double *aos_data1,
                               double *int2_grad1_u12, double *int_2e_ao) {
 
 
@@ -20,21 +20,21 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
 
     // Hermitian part
 
-    cudaMalloc((void**)&int_fct_short_range_herm, n_grid1 * ao_num * ao_num * sizeof(double));
+    cudaMalloc((void**)&int_fct_short_range_herm, n_grid1 * n_ao * n_ao * sizeof(double));
 
-    int_short_range_herm_kernel<<<nBlocks, blockSize>>>(n_grid1, ao_num, wr1, aos_data1, int_fct_short_range_herm);
+    int_short_range_herm_kernel<<<nBlocks, blockSize>>>(n_grid1, n_ao, wr1, aos_data1, int_fct_short_range_herm);
     cudaDeviceSynchronize();
 
     cublasCreate(&handle);
 
     cublasDgemm( handle
                , CUBLAS_OP_N, CUBLAS_OP_N
-               , ao_num*ao_num, ao_num*ao_num, n_grid1
+               , n_ao*n_ao, n_ao*n_ao, n_grid1
                , &alpha
-               , &int2_grad1_u12[ao_num*ao_num*n_grid1*3], ao_num*ao_num
+               , &int2_grad1_u12[n_ao*n_ao*n_grid1*3], n_ao*n_ao
                , &int_fct_short_range_herm[0], n_grid1
                , &beta
-               , &int_2e_ao[0], ao_num*ao_num );
+               , &int_2e_ao[0], n_ao*n_ao );
 
     cublasDestroy(handle);
 
@@ -46,8 +46,8 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
 
     // non-Hermitian part
 
-    cudaMalloc((void**)&int_fct_short_range_nonherm, 3*n_grid1*ao_num*ao_num*sizeof(double));
-    int_short_range_nonherm_kernel<<<nBlocks, blockSize>>>(n_grid1, ao_num, wr1, aos_data1, int_fct_short_range_nonherm);
+    cudaMalloc((void**)&int_fct_short_range_nonherm, 3*n_grid1*n_ao*n_ao*sizeof(double));
+    int_short_range_nonherm_kernel<<<nBlocks, blockSize>>>(n_grid1, n_ao, wr1, aos_data1, int_fct_short_range_nonherm);
 
     cublasCreate(&handle);
 
@@ -55,12 +55,12 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
     beta = 1.0;
     cublasDgemm( handle
                , CUBLAS_OP_N, CUBLAS_OP_N
-               , ao_num*ao_num, ao_num*ao_num, 3*n_grid1
+               , n_ao*n_ao, n_ao*n_ao, 3*n_grid1
                , &alpha
-               , &int2_grad1_u12[0], ao_num*ao_num
+               , &int2_grad1_u12[0], n_ao*n_ao
                , &int_fct_short_range_nonherm[0], 3*n_grid1
                , &beta
-               , &int_2e_ao[0], ao_num*ao_num );
+               , &int_2e_ao[0], n_ao*n_ao );
 
     cublasDestroy(handle);
 

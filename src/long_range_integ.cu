@@ -1,6 +1,6 @@
 
 
-__global__ void int_long_range_kernel(int n_grid2, int ao_num, double *wr2, double* aos_data2, double *int_fct_long_range) {
+__global__ void int_long_range_kernel(int n_grid2, int n_ao, double *wr2, double* aos_data2, double *int_fct_long_range) {
 
 
     int i_grid2;
@@ -14,20 +14,20 @@ __global__ void int_long_range_kernel(int n_grid2, int ao_num, double *wr2, doub
 
     i_grid2 = blockIdx.x * blockDim.x + threadIdx.x;
 
-    ll0 = ao_num * n_grid2;
+    ll0 = n_ao * n_grid2;
 
     while(i_grid2 < n_grid2) {
 
         wr2_tmp = wr2[i_grid2];
 
-        for(i_ao = 0; i_ao < ao_num; i_ao++) {
+        for(i_ao = 0; i_ao < n_ao; i_ao++) {
 
             ll1 = i_grid2 + i_ao * ll0;
 
             ii_ao = i_grid2 + n_grid2 * i_ao;
             ao_val_i = aos_data2[ii_ao];
 
-            for(j_ao = 0; j_ao < ao_num; j_ao++) {
+            for(j_ao = 0; j_ao < n_ao; j_ao++) {
 
                 ll2 = ll1 + j_ao * n_grid2;
 
@@ -48,10 +48,10 @@ __global__ void int_long_range_kernel(int n_grid2, int ao_num, double *wr2, doub
 
 
 extern "C" void int_long_range(int nBlocks, int blockSize,
-                               int n_grid2, int ao_num, double *wr2, double* aos_data2,
+                               int n_grid2, int n_ao, double *wr2, double* aos_data2,
                                double *int_fct_long_range) {
 
-    int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, ao_num, wr2, aos_data2, int_fct_long_range);
+    int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
 
 }
 
