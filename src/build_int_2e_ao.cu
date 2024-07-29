@@ -69,6 +69,24 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
     // // //
 
 
+    // int_2e_ao <-- int_2e_ao + int_2e_ao.T
+
+    cublasCreate(&handle);
+
+    alpha = 1.0;
+    beta = 1.0;
+    cublasDgeam( handle
+               , CUBLAS_OP_T, CUBLAS_OP_N
+               , n_ao*n_ao, n_ao*n_ao
+               , &alpha
+               , &int_2e_ao[0], n_ao*n_ao
+               , &beta
+               , &int_2e_ao[0], n_ao*n_ao
+               , &int_2e_ao[0], n_ao*n_ao );
+
+    cublasDestroy(handle);
+
+    // // //
 
 }
 
