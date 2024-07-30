@@ -18,12 +18,12 @@ extern void get_int_2e_ao(int nBlocks, int blockSize,
 
 
 
-int tc_int_c_(int nBlocks, int blockSize,
-              int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
-              double *h_r1, double *h_wr1, double *h_r2, double *h_wr2, double *h_rn,
-              double *h_aos_data1, double *h_aos_data2,
-              double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh, 
-              double *h_int2_grad1_u12_ao, double *h_int_2e_ao) {
+int tc_int_c(int nBlocks, int blockSize,
+             int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
+             double *h_r1, double *h_wr1, double *h_r2, double *h_wr2, double *h_rn,
+             double *h_aos_data1, double *h_aos_data2,
+             double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh, 
+             double *h_int2_grad1_u12_ao, double *h_int_2e_ao) {
 
 
     double *d_r1, *d_wr1;
@@ -46,17 +46,17 @@ int tc_int_c_(int nBlocks, int blockSize,
 
     // integral over r2
 
-    size_jbh_d = size_bh * sizeof(double);
-    size_jbh_i = size_bh * sizeof(int);
+    size_jbh_d = size_bh * n_nuc * sizeof(double);
+    size_jbh_i = size_bh * n_nuc * sizeof(int);
 
     size_r1 = 3 * n_grid1 * sizeof(double);
     size_r2 = 3 * n_grid2 * sizeof(double);
     size_wr2 = n_grid2 * sizeof(double);
-    size_rn = 3 * n_nuc   * sizeof(double);
+    size_rn = 3 * n_nuc * sizeof(double);
 
     size_aos_r2 = 4 * n_grid2 * n_ao * sizeof(double);
 
-    size_int1 = 4 * n_grid2 * n_ao * n_ao * sizeof(double);
+    size_int1 = 4 * n_grid1 * n_ao * n_ao * sizeof(double);
 
     cudaMalloc((void**)&d_c_bh, size_jbh_d);
     cudaMalloc((void**)&d_m_bh, size_jbh_i);

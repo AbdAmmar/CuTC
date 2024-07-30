@@ -1,5 +1,5 @@
 
-NVCC = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/cuda/bin/nvcc
+NVCC = nvcc
 NFLAGS = -O2 --compiler-options '-fPIC'
 NLDFLAGS = --shared
 
@@ -35,36 +35,53 @@ OUTPUT_BIN = tc_int
 OUTPUT_LIB = tc_int_cu
 
 TARGET = $(BIN_DIR)/$(OUTPUT_BIN)
+TARGET_DEB = $(BIN_DIR)/deb_binding
 
-CUDA_LIBS = -lcudart -lcublas -lstdc++
-CUDA_LIBDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/cuda/lib64
-CUDA_INCDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/cuda/include
-CUBLAS_LIBDIR = /usr/local/nvidia_hpc_sdk/MAJSLURM/Linux_x86_64/23.9/math_libs/11.8/targets/x86_64-linux/lib
-
+CUDA_LIBS = -lcudart -lcublas
 
 
 TC_LIBS = $(BUILD_DIR)/lib$(OUTPUT_LIB).so
 
-
-all: $(TARGET)
+all: $(TARGET) $(TARGET_DEB)
 
 $(TARGET): $(TC_LIBS) $(F_OBJ) $(MAIN_OBJ)
-	$(FC) $^ -o $@ $(CUDA_LIBS) -l$(OUTPUT_LIB) -L$(CUDA_LIBDIR) -L$(CUBLAS_LIBDIR) -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR)
+	$(FC) $^ -o $@ $(CUDA_LIBS) -l$(OUTPUT_LIB) -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR)
 
 $(TC_LIBS): $(KERNEL_OBJ) $(C_OBJ)
-	$(NVCC) $(NFLAGS) $(NLDFLAGS) $^ -o $@ $(CUDA_LIBS) -L$(CUDA_LIBDIR) -L$(CUBLAS_LIBDIR)
+	$(NVCC) $(NFLAGS) $(NLDFLAGS) $^ -o $@ $(CUDA_LIBS)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cu
 	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)
 
 $(C_OBJ): $(C_SRC)
-	$(CC) $(CFLAGS) -I$(CUDA_INCDIR) -c $(C_SRC) -o $(C_OBJ)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 $(F_OBJ): $(F_SRC)
-	$(FC) $(FFLAGS) -c $(F_SRC) -o $(F_OBJ) -J$(BUILD_DIR)
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
 
 $(MAIN_OBJ): $(MAIN_SRC)
-	$(FC) $(FFLAGS) -c $(MAIN_SRC) -o $(MAIN_OBJ) -J$(BUILD_DIR)
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
+
+
+
+
+$(TARGET_DEB): $(BUILD_DIR)/libdebbind.so $(BUILD_DIR)/deb_module.o $(BUILD_DIR)/deb_binding.o
+	$(FC) $^ -o $@ $(CUDA_LIBS) -ldebbind -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR)
+
+$(BUILD_DIR)/libdebbind.so: $(BUILD_DIR)/deb_fct_c.o
+	$(NVCC) $(NFLAGS) $(NLDFLAGS) $^ -o $@ $(CUDA_LIBS)
+
+$(BUILD_DIR)/deb_fct_c.o: $(SRC_DIR)/deb_fct_c.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BUILD_DIR)/deb_module.o: $(SRC_DIR)/deb_module.f90
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
+
+$(BUILD_DIR)/deb_binding.o: $(SRC_DIR)/deb_binding.f90
+	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
+
+
+
 
 .PHONY: clean
 clean:
