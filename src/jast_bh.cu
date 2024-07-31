@@ -1,7 +1,6 @@
 
 
-__global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
-                                 int n_grid1, int n_grid2, int n_nuc, int size_bh,
+__global__ void tc_int_bh_kernel(int ii0, int n_grid1, int n_grid2, int n_nuc, int size_bh,
                                  double *r1, double *r2, double *rn, 
                                  double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                                  double *grad1_u12) {
@@ -14,7 +13,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
     */
 
     int i_grid1, i_grid2;
-    int ii_grid1, ii_grid2, ii_nuc;
+    int ii_grid1, ii_grid2, ii_nuc, ii_12;
     int i_nuc;
     int i_bh;
     int i;
@@ -36,6 +35,9 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
     double tmp1, tmp2;
 
 
+
+    ii_12 = n_grid1 * n_grid2;
+
     i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
 
     while(i_grid1 < n_grid1) {
@@ -44,15 +46,15 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
         r1_y = r1[ii0 + i_grid1 +   n_grid1];
         r1_z = r1[ii0 + i_grid1 + 2*n_grid1];
 
-        ii_grid1 = i_grid1 * n_grid1;
+        ii_grid1 = i_grid1 * n_grid2;
 
         for(i_grid2 = 0; i_grid2 < n_grid2; i_grid2++) {
 
             ii_grid2 = ii_grid1 + i_grid2;
 
-            grad1_u12[ii_grid2            ] = 0.0;
-            grad1_u12[ii_grid2 +   n_grid2] = 0.0;
-            grad1_u12[ii_grid2 + 2*n_grid2] = 0.0;
+            grad1_u12[ii_grid2          ] = 0.0;
+            grad1_u12[ii_grid2 +   ii_12] = 0.0;
+            grad1_u12[ii_grid2 + 2*ii_12] = 0.0;
 
             r2_x = r2[i_grid2            ];
             r2_y = r2[i_grid2 +   n_grid2];
@@ -63,7 +65,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
             dy = r1_y - r2_y;
             dz = r1_z - r2_z;
             dist = dx * dx + dy * dy + dz * dz;
-            if(dist < 1e-15) {
+            if(dist > 1e-15) {
                 dist = sqrt(dist);
                 tmp1 = 1.0 / (1.0 + dist);
                 g12  = dist * tmp1;
@@ -89,7 +91,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
                 dy = r1_y - rn_y;
                 dz = r1_z - rn_z;
                 dist = dx * dx + dy * dy + dz * dz;
-                if(dist < 1e-15) {
+                if(dist > 1e-15) {
                     dist = sqrt(dist);
                     tmp1 = 1.0 / (1.0 + dist);
                     f1n  = dist * tmp1;
@@ -109,7 +111,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
                 dy = r2_y - rn_y;
                 dz = r2_z - rn_z;
                 dist = dx * dx + dy * dy + dz * dz;
-                if(dist < 1e-15) {
+                if(dist > 1e-15) {
                     dist = sqrt(dist);
                     f2n  = dist / (1.0 + dist);
                 } else {
@@ -122,7 +124,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
 
                     c = c_bh[i_bh + ii_nuc];
                     if(fabs(c) < 1e-10)
-                        break;
+                        continue;
 
                     m = m_bh[i_bh + ii_nuc];
                     n = n_bh[i_bh + ii_nuc];
@@ -177,9 +179,9 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
                         tmp1 *= c;
                     }
 
-                    grad1_u12[ii_grid2            ] += tmp1 * f1nx + tmp2 * g12x;
-                    grad1_u12[ii_grid2 +   n_grid2] += tmp1 * f1ny + tmp2 * g12y;
-                    grad1_u12[ii_grid2 + 2*n_grid2] += tmp1 * f1nz + tmp2 * g12z;
+                    grad1_u12[ii_grid2          ] += tmp1 * f1nx + tmp2 * g12x;
+                    grad1_u12[ii_grid2 +   ii_12] += tmp1 * f1ny + tmp2 * g12y;
+                    grad1_u12[ii_grid2 + 2*ii_12] += tmp1 * f1nz + tmp2 * g12z;
 
                 } // i_bh
 
@@ -187,12 +189,14 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
 
         } // i_grid2
 
-        ii_grid2 = ii_grid1 + i_grid2;
-
         for(i_grid2 = 0; i_grid2 < n_grid2; i_grid2++) {
-            grad1_u12[ii_grid2 + 3*n_grid2] = -0.5 * ( grad1_u12[ii_grid2            ] * grad1_u12[ii_grid2            ]
-                                                     + grad1_u12[ii_grid2 +   n_grid2] * grad1_u12[ii_grid2 +   n_grid2]
-                                                     + grad1_u12[ii_grid2 + 2*n_grid2] * grad1_u12[ii_grid2 + 2*n_grid2] );
+
+            ii_grid2 = ii_grid1 + i_grid2;
+
+            grad1_u12[ii_grid2 + 3*ii_12] = -0.5 * ( grad1_u12[ii_grid2          ] * grad1_u12[ii_grid2          ]
+                                                   + grad1_u12[ii_grid2 +   ii_12] * grad1_u12[ii_grid2 +   ii_12]
+                                                   + grad1_u12[ii_grid2 + 2*ii_12] * grad1_u12[ii_grid2 + 2*ii_12] );
+
         }
 
         i_grid1 += blockDim.x * gridDim.x;
@@ -204,15 +208,13 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
 
 
 extern "C" void tc_int_bh(int nBlocks, int blockSize,
-                          int ii0, int n_grid1_pass,
-                          int n_grid1, int n_grid2, int n_nuc, int size_bh,
+                          int ii0, int n_grid1, int n_grid2, int n_nuc, int size_bh,
                           double *r1, double *r2, double *rn, 
                           double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                           double *grad1_u12) {
 
 
-    tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii0, n_grid1_pass,
-                                             n_grid1, n_grid2, n_nuc, size_bh,
+    tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii0, n_grid1, n_grid2, n_nuc, size_bh,
                                              r1, r2, rn, 
                                              c_bh, m_bh, n_bh, o_bh,
                                              grad1_u12);
