@@ -23,9 +23,9 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
     int m;
     double alpha, beta;
 
-//    cublasHandle_t handle;
-//
-//    cublasCreate(&handle);
+    cublasHandle_t myhandle;
+
+    cublasCreate(&myhandle);
 
     alpha = 1.0;
     beta = 0.0;
@@ -42,58 +42,58 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
 
     for (i_pass = 0; i_pass < n_pass; i_pass++) {
 
-      ii = i_pass * n_grid1_pass;
-
-      tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1, n_grid2, n_nuc, size_bh,
-                                               r1, r2, rn,
-                                               c_bh, m_bh, n_bh, o_bh,
-                                               grad1_u12);
+        ii = i_pass * n_grid1_pass;
   
-      cudaDeviceSynchronize();
-  
-      for (m = 0; m < 4; m++) {
-          jj = jj0 * (ii + m * n_grid1);
-          kk = kk0 * m;
-          cublasDgemm( handle
-                     , CUBLAS_OP_T, CUBLAS_OP_N
-                     , n_ao*n_ao, n_grid1_pass, n_grid2
-                     , &alpha
-                     , &int_fct_long_range[0], n_grid2
-                     , &grad1_u12[kk], n_grid2
-                     , &beta
-                     , &int2_grad1_u12_ao[jj], n_ao*n_ao );
-      }
+        tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1, n_grid2, n_nuc, size_bh,
+                                                 r1, r2, rn,
+                                                 c_bh, m_bh, n_bh, o_bh,
+                                                 grad1_u12);
+    
+        cudaDeviceSynchronize();
+    
+        for (m = 0; m < 4; m++) {
+            jj = jj0 * (ii + m * n_grid1);
+            kk = kk0 * m;
+            cublasDgemm( myhandle
+                       , CUBLAS_OP_T, CUBLAS_OP_N
+                       , n_ao*n_ao, n_grid1_pass, n_grid2
+                       , &alpha
+                       , &int_fct_long_range[0], n_grid2
+                       , &grad1_u12[kk], n_grid2
+                       , &beta
+                       , &int2_grad1_u12_ao[jj], n_ao*n_ao );
+        }
 
     }
     
     if(n_grid1_rest > 0) {
 
-      ii = n_pass * n_grid1_pass;
-
-      tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1, n_grid2, n_nuc, size_bh,
-                                               r1, r2, rn,
-                                               c_bh, m_bh, n_bh, o_bh,
-                                               grad1_u12);
-  
-      cudaDeviceSynchronize();
-  
-      for (m = 0; m < 4; m++) {
-          jj = jj0 * (ii + m * n_grid1);
-          kk = kk0 * m;
-          cublasDgemm( handle
-                     , CUBLAS_OP_T, CUBLAS_OP_N
-                     , n_ao*n_ao, n_grid1_rest, n_grid2
-                     , &alpha
-                     , &int_fct_long_range[0], n_grid2
-                     , &grad1_u12[kk], n_grid2
-                     , &beta
-                     , &int2_grad1_u12_ao[jj], n_ao*n_ao );
-      }
+        ii = n_pass * n_grid1_pass;
+     
+        tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1, n_grid2, n_nuc, size_bh,
+                                                 r1, r2, rn,
+                                                 c_bh, m_bh, n_bh, o_bh,
+                                                 grad1_u12);
+    
+        cudaDeviceSynchronize();
+    
+        for (m = 0; m < 4; m++) {
+            jj = jj0 * (ii + m * n_grid1);
+            kk = kk0 * m;
+            cublasDgemm( myhandle
+                       , CUBLAS_OP_T, CUBLAS_OP_N
+                       , n_ao*n_ao, n_grid1_rest, n_grid2
+                       , &alpha
+                       , &int_fct_long_range[0], n_grid2
+                       , &grad1_u12[kk], n_grid2
+                       , &beta
+                       , &int2_grad1_u12_ao[jj], n_ao*n_ao );
+        }
 
     }
 
 
-//    cublasDestroy(handle);
+    cublasDestroy(myhandle);
 
     cudaFree(int_fct_long_range);
     cudaFree(grad1_u12);

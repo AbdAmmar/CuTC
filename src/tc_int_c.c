@@ -111,6 +111,7 @@ int tc_int_c(int nBlocks, int blockSize,
     } else {
         n_grid1_pass = n_grid1;
     }
+    n_grid1_pass = n_grid1;
 
     n_grid1_rest = (int) fmod(1.0 * n_grid1, 1.0 * n_grid1_pass);
     n_pass = (int) ((n_grid1 - n_grid1_rest) / n_grid1_pass);

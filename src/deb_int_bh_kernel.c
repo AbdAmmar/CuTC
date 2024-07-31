@@ -22,8 +22,8 @@ int deb_int_bh_kernel(int nBlocks, int blockSize,
 
     int ii;
 
-    double *d_r1, *d_wr1;
-    double *d_r2, *d_wr2;
+    double *d_r1;
+    double *d_r2;
     double *d_rn;
 
     double *d_c_bh;

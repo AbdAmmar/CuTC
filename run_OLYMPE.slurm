@@ -14,7 +14,7 @@ module load cuda/11.7
 #nvcc --version
 #nvidia-smi
 
-time ./bin/tc_int
-#time ./bin/deb_binding
+#time ./bin/tc_int
+time ./bin/deb_binding
 
 #nvidia-smi

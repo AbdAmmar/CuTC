@@ -22,8 +22,8 @@ $(shell mkdir -p $(BUILD_DIR))
 KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
 KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR)/%.o)
 
-C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int_long_range.c $(SRC_DIR)/deb_int_bh_kernel.c
-C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int_long_range.o $(BUILD_DIR)/deb_int_bh_kernel.o
+C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int_long_range.c $(SRC_DIR)/deb_int_bh_kernel.c $(SRC_DIR)/deb_int2_grad1_u12_ao.c
+C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int_long_range.o $(BUILD_DIR)/deb_int_bh_kernel.o $(BUILD_DIR)/deb_int2_grad1_u12_ao.o
 
 F_SRC = $(SRC_DIR)/gpu_module.f90
 F_OBJ = $(BUILD_DIR)/gpu_module.o
