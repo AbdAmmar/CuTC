@@ -5,10 +5,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <cublas_v2.h>
+
 
 
 
 extern void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
+                                  cublasHandle_t handle,
                                   int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
                                   int n_grid1_pass, int n_grid1_rest, int n_pass,
                                   double *r1, double *r2, double *wr2, double *rn, double *aos_data2,
@@ -16,6 +19,7 @@ extern void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
                                   double *int2_grad1_u12_ao);
 
 extern void get_int_2e_ao(int nBlocks, int blockSize,
+                          cublasHandle_t handle,
                           int n_grid1, int n_ao, double *wr1, double *aos_data1,
                           double *int2_grad1_u12_ao, double *tc_int_2e_ao);
 
@@ -48,6 +52,9 @@ int tc_int_c(int nBlocks, int blockSize,
     size_t size_int1, size_int2;
     size_t size_jbh_d, size_jbh_i;
 
+    cublasHandle_t handle;
+
+    cublasCreate(&handle);
 
 
 
@@ -112,7 +119,8 @@ int tc_int_c(int nBlocks, int blockSize,
     printf("n_grid1_rest = %d\n", n_grid1_rest);
     printf("n_pass = %d\n", n_pass);
 
-    get_int2_grad1_u12_ao(nBlocks, blockSize,
+    get_int2_grad1_u12_ao(nBlocks, blockSize, 
+                          handle,
                           n_grid1, n_grid2, n_ao, n_nuc, size_bh,
                           n_grid1_pass, n_grid1_rest, n_pass,
                           d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
@@ -151,7 +159,9 @@ int tc_int_c(int nBlocks, int blockSize,
     cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice);
     cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
 
-    get_int_2e_ao(nBlocks, blockSize, n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
+    get_int_2e_ao(nBlocks, blockSize, 
+                  handle,
+                  n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
 
     cudaFree(d_wr1);
     cudaFree(d_aos_data1);
@@ -170,6 +180,7 @@ int tc_int_c(int nBlocks, int blockSize,
 
     // // //
 
+    cublasDestroy(handle);
 
     return 0;
 }
