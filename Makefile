@@ -22,8 +22,8 @@ $(shell mkdir -p $(BUILD_DIR))
 KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
 KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR)/%.o)
 
-C_SRC = $(SRC_DIR)/tc_int_c.c
-C_OBJ = $(BUILD_DIR)/tc_int_c.o
+C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/tc_int_c_deb.c $(SRC_DIR)/deb_int_long_range.c
+C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/tc_int_c_deb.o $(BUILD_DIR)/deb_int_long_range.o
 
 F_SRC = $(SRC_DIR)/gpu_module.f90
 F_OBJ = $(BUILD_DIR)/gpu_module.o
@@ -54,7 +54,11 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cu
 	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)
 
 $(C_OBJ): $(C_SRC)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@for src in $(C_SRC); do \
+		obj=$(BUILD_DIR)/$$(basename $${src} .c).o; \
+		echo "$(CC) $(CFLAGS) -c $$src -o $$obj -I$(INC_DIR)"; \
+		$(CC) $(CFLAGS) -c $$src -o $$obj -I$(INC_DIR); \
+	done
 
 $(F_OBJ): $(F_SRC)
 	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)

@@ -19,16 +19,16 @@ program tc_int
     double precision, allocatable :: int_2e_ao(:,:,:,:)
 
 
-    nBlocks = 1
+    nBlocks = 100
     blockSize = 32
 
-    n_grid1 = 1000
-    n_grid2 = 10000
+    n_grid1 = 6667
+    n_grid2 = 60730
 
-    n_ao = 20
+    n_ao = 95
     n_nuc = 3
 
-    size_bh = 20
+    size_bh = 9
 
     allocate(r1(n_grid1,3), wr1(n_grid1))
     allocate(r2(n_grid2,3), wr2(n_grid2))
@@ -53,8 +53,6 @@ program tc_int
     int2_grad1_u12_ao = 0.d0
     int_2e_ao = 0.d0
 
-    print *, " start call to tc_int_c"
-
     call tc_int_c(nBlocks, blockSize,                     &
                   n_grid1, n_grid2, n_ao, n_nuc, size_bh, &
                   r1, wr1, r2,  wr2, rn,                  &
@@ -62,7 +60,12 @@ program tc_int
                   c_bh, m_bh, n_bh, o_bh,                 &
                   int2_grad1_u12_ao, int_2e_ao)
 
-    print *, " end tc_int_c"
+    call tc_int_c_deb(nBlocks, blockSize,                     &
+                      n_grid1, n_grid2, n_ao, n_nuc, size_bh, &
+                      r1, wr1, r2,  wr2, rn,                  &
+                      aos_data1, aos_data2,                   &
+                      c_bh, m_bh, n_bh, o_bh,                 &
+                      int2_grad1_u12_ao, int_2e_ao)
 
 end program tc_int
 

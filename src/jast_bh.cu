@@ -1,6 +1,7 @@
 
 
-__global__ void tc_int_bh_kernel(int n_grid1, int n_grid2, int n_nuc, int size_bh,
+__global__ void tc_int_bh_kernel(int ii0, int n_grid1_pass,
+                                 int n_grid1, int n_grid2, int n_nuc, int size_bh,
                                  double *r1, double *r2, double *rn, 
                                  double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                                  double *grad1_u12) {
@@ -39,9 +40,9 @@ __global__ void tc_int_bh_kernel(int n_grid1, int n_grid2, int n_nuc, int size_b
 
     while(i_grid1 < n_grid1) {
 
-        r1_x = r1[i_grid1          ];
-        r1_y = r1[i_grid1+  n_grid1];
-        r1_z = r1[i_grid1+2*n_grid1];
+        r1_x = r1[ii0 + i_grid1            ];
+        r1_y = r1[ii0 + i_grid1 +   n_grid1];
+        r1_z = r1[ii0 + i_grid1 + 2*n_grid1];
 
         ii_grid1 = i_grid1 * n_grid1;
 
@@ -203,13 +204,15 @@ __global__ void tc_int_bh_kernel(int n_grid1, int n_grid2, int n_nuc, int size_b
 
 
 extern "C" void tc_int_bh(int nBlocks, int blockSize,
+                          int ii0, int n_grid1_pass,
                           int n_grid1, int n_grid2, int n_nuc, int size_bh,
                           double *r1, double *r2, double *rn, 
                           double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                           double *grad1_u12) {
 
 
-    tc_int_bh_kernel<<<nBlocks, blockSize>>>(n_grid1, n_grid2, n_nuc, size_bh,
+    tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii0, n_grid1_pass,
+                                             n_grid1, n_grid2, n_nuc, size_bh,
                                              r1, r2, rn, 
                                              c_bh, m_bh, n_bh, o_bh,
                                              grad1_u12);

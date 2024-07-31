@@ -7,6 +7,10 @@
 #include <math.h>
 
 
+extern void int_long_range(int nBlocks, int blockSize,
+                           int n_grid2, int n_ao, double *wr2, double* aos_data2,
+                           double *int_fct_long_range);
+
 
 extern void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
                                   int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
@@ -21,12 +25,16 @@ extern void get_int_2e_ao(int nBlocks, int blockSize,
 
 
 
-int tc_int_c(int nBlocks, int blockSize,
-             int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
-             double *h_r1, double *h_wr1, double *h_r2, double *h_wr2, double *h_rn,
-             double *h_aos_data1, double *h_aos_data2,
-             double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh, 
-             double *h_int2_grad1_u12_ao, double *h_int_2e_ao) {
+int tc_int_c_deb(int nBlocks, int blockSize,
+                 int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
+                 double *h_r1, double *h_wr1, double *h_r2, double *h_wr2, double *h_rn,
+                 double *h_aos_data1, double *h_aos_data2,
+                 double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh, 
+                 double *h_int2_grad1_u12_ao, double *h_int_2e_ao) {
+
+    int i, j;
+    int ipoint, jpoint;
+    int ll;
 
     int n_grid1_pass, n_grid1_rest, n_pass;
     double n_tmp;
@@ -112,63 +120,95 @@ int tc_int_c(int nBlocks, int blockSize,
     printf("n_grid1_rest = %d\n", n_grid1_rest);
     printf("n_pass = %d\n", n_pass);
 
-    get_int2_grad1_u12_ao(nBlocks, blockSize,
-                          n_grid1, n_grid2, n_ao, n_nuc, size_bh,
-                          n_grid1_pass, n_grid1_rest, n_pass,
-                          d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
-                          d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                          d_int2_grad1_u12_ao);
-
-
-    cudaFree(d_c_bh);
-    cudaFree(d_m_bh);
-    cudaFree(d_n_bh);
-    cudaFree(d_o_bh);
-
-    cudaFree(d_r1);
-
-    cudaFree(d_r2);
-    cudaFree(d_wr2);
-
-    cudaFree(d_rn);
-
-    cudaFree(d_aos_data2);
-
-    // // //
 
 
 
-    // 2-e integral
+    // int_long_range_kernel debug
 
-    size_wr1 = n_grid1 * sizeof(double);
-    size_aos_r1 = 4 * n_grid1 * n_ao * sizeof(double);
-    size_int2 = n_ao * n_ao * n_ao * n_ao * sizeof(double);
+    printf(" DEBUG int_long_range_kernel\n");
 
-    cudaMalloc((void**)&d_wr1, size_wr1);
-    cudaMalloc((void**)&d_aos_data1, size_aos_r1);
-    cudaMalloc((void**)&d_int_2e_ao, size_int2);
+    double *h_int_fct_long_range;
+    double *d_int_fct_long_range;
 
-    cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
+    cudaMalloc((void**)&d_int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double));
+    int_long_range(nBlocks, blockSize, n_grid2, n_ao, d_wr2, d_aos_data2, d_int_fct_long_range);
 
-    get_int_2e_ao(nBlocks, blockSize, n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
+    h_int_fct_long_range = (double*) malloc(n_grid2 * n_ao * n_ao * sizeof(double));
+    cudaMemcpy(h_int_fct_long_range, d_int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double), cudaMemcpyDeviceToHost);
+    cudaFree(d_int_fct_long_range);
 
-    cudaFree(d_wr1);
-    cudaFree(d_aos_data1);
+    for(j = 0; j < n_ao; j++) {
+        for(i = 0; i < n_ao; i++) {
+            for(jpoint = 0; i < n_grid2; jpoint++) {
+                ll = jpoint + i*n_grid2 + j*n_grid2*n_ao;
+                printf(" %15.7f\n", h_int_fct_long_range[ll]);
+            }
+        }
+    }
+ 
+    free(h_int_fct_long_range);
 
     // // //
-
-
-
-    // transfer data to Host
-
-    cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1, cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost);
-
-    cudaFree(d_int2_grad1_u12_ao);
-    cudaFree(d_int_2e_ao);
-
-    // // //
+//
+//
+//
+//    get_int2_grad1_u12_ao(nBlocks, blockSize,
+//                          n_grid1, n_grid2, n_ao, n_nuc, size_bh,
+//                          n_grid1_pass, n_grid1_rest, n_pass,
+//                          d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
+//                          d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+//                          d_int2_grad1_u12_ao);
+//
+//
+//    cudaFree(d_c_bh);
+//    cudaFree(d_m_bh);
+//    cudaFree(d_n_bh);
+//    cudaFree(d_o_bh);
+//
+//    cudaFree(d_r1);
+//
+//    cudaFree(d_r2);
+//    cudaFree(d_wr2);
+//
+//    cudaFree(d_rn);
+//
+//    cudaFree(d_aos_data2);
+//
+//    // // //
+//
+//
+//
+//    // 2-e integral
+//
+//    size_wr1 = n_grid1 * sizeof(double);
+//    size_aos_r1 = 4 * n_grid1 * n_ao * sizeof(double);
+//    size_int2 = n_ao * n_ao * n_ao * n_ao * sizeof(double);
+//
+//    cudaMalloc((void**)&d_wr1, size_wr1);
+//    cudaMalloc((void**)&d_aos_data1, size_aos_r1);
+//    cudaMalloc((void**)&d_int_2e_ao, size_int2);
+//
+//    cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice);
+//    cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
+//
+//    get_int_2e_ao(nBlocks, blockSize, n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
+//
+//    cudaFree(d_wr1);
+//    cudaFree(d_aos_data1);
+//
+//    // // //
+//
+//
+//
+//    // transfer data to Host
+//
+//    cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1, cudaMemcpyDeviceToHost);
+//    cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost);
+//
+//    cudaFree(d_int2_grad1_u12_ao);
+//    cudaFree(d_int_2e_ao);
+//
+//    // // //
 
 
     return 0;
