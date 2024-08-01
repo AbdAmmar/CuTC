@@ -24,24 +24,30 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
                           int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
                           double *h_r1, double *h_r2, double *h_wr2, double *h_rn, double *h_aos_data2,
                           double *h_c_bh, int *h_m_bh, int *h_n_bh, int *h_o_bh,
-                          double *h_int_fct_long_range, double *h_grad1_u12, double *h_int2_grad1_u12_ao) {
-    
+                          double *h_int2_grad1_u12_ao) {
+
     int ii;
+    int jj0, jj;
+    int kk0, kk;
+    int i_pass;
+    int n_grid1_pass, n_grid1_rest, n_pass;
+    double n_tmp;
+
     int i, j;
     int ipoint, jpoint;
     int ll;
     int m;
-    int jj, kk;
     double alpha, beta;
 
     cublasHandle_t myhandle;
 
-    cublasCreate(&myhandle);
+    checkCublasErrors(cublasCreate(&myhandle), "cublasCreate", __FILE__, __LINE__);
 
 
     size_t size_r1, size_r2, size_wr2, size_rn;
     size_t size_aos_r2;
     size_t size_jbh_d, size_jbh_i;
+    size_t size_1, size_2, size_3;
 
     double *d_r1, *d_r2, *d_wr2, *d_rn;
     double *d_aos_data2;
@@ -55,11 +61,6 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
 
     printf(" DEBUG int2_grad1_u12_ao\n");
 
-    ii = 0;
-
-    alpha = 1.0;
-    beta = 0.0;
-
 
     size_r1 = 3 * n_grid1 * sizeof(double);
     size_r2 = 3 * n_grid2 * sizeof(double);
@@ -71,36 +72,38 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
     size_jbh_d = size_bh * n_nuc * sizeof(double);
     size_jbh_i = size_bh * n_nuc * sizeof(int);
 
-
-    cudaMalloc((void**)&d_r1, size_r1);
-    cudaMalloc((void**)&d_r2, size_r2);
-    cudaMalloc((void**)&d_wr2, size_wr2);
-    cudaMalloc((void**)&d_rn, size_rn);
-
-    cudaMalloc((void**)&d_aos_data2, size_aos_r2);
-
-    cudaMalloc((void**)&d_c_bh, size_jbh_d);
-    cudaMalloc((void**)&d_m_bh, size_jbh_i);
-    cudaMalloc((void**)&d_n_bh, size_jbh_i);
-    cudaMalloc((void**)&d_o_bh, size_jbh_i);
-
-    cudaMalloc((void**)&d_int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double));
-    cudaMalloc((void**)&d_grad1_u12, 4 * n_grid1 * n_grid2 * sizeof(double));
-    cudaMalloc((void**)&d_int2_grad1_u12_ao, 4 * n_grid1 * n_ao * n_ao * sizeof(double));
+    size_1 = n_grid2 * n_ao * n_ao * sizeof(double);
+    size_3 = 4 * n_grid1 * n_ao * n_ao * sizeof(double);
 
 
+    checkCudaErrors(cudaMalloc((void**)&d_r1, size_r1), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_r2, size_r2), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_wr2, size_wr2), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_rn, size_rn), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMalloc((void**)&d_aos_data2, size_aos_r2), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMalloc((void**)&d_c_bh, size_jbh_d), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_m_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_n_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_o_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMalloc((void**)&d_int_fct_long_range, size_1), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_int2_grad1_u12_ao, size_3), "cudaMalloc", __FILE__, __LINE__);
+
+
+
+    checkCudaErrors(cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
 
 
     // // //
@@ -115,61 +118,117 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
 
     // // //
 
-    tc_int_bh(nBlocks, blockSize, 
-              ii, n_grid1, n_grid2, n_nuc, size_bh,
-              d_r1, d_r2, d_rn,
-              d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-              d_grad1_u12);
+    jj0 = n_ao * n_ao;
 
-    cudaDeviceSynchronize();
+    alpha = 1.0;
+    beta = 0.0;
 
-    // // //
-
-
-
-
-    // // //
-
-    for (m = 0; m < 4; m++) {
-        jj = n_ao * n_ao * n_grid1 * m;
-        kk = n_grid1 * n_grid2 * m;
-        cublasDgemm( myhandle
-                   , CUBLAS_OP_T, CUBLAS_OP_N
-                   , n_ao*n_ao, n_grid1, n_grid2
-                   , &alpha
-                   , &d_int_fct_long_range[0], n_grid2
-                   , &d_grad1_u12[kk], n_grid2
-                   , &beta
-                   , &d_int2_grad1_u12_ao[jj], n_ao*n_ao );
+    //       amount in GB
+    n_tmp = (0.001e9 / 8.0) / (4.0 * (double) n_grid2);
+    if(n_tmp < 1.0*n_grid1) {
+        if(n_tmp > 1.0) {
+            n_grid1_pass = (int) n_tmp;
+        } else {
+            n_grid1_pass = 1;
+        }
+    } else {
+        n_grid1_pass = n_grid1;
     }
 
+    n_grid1_rest = (int) fmod(1.0 * n_grid1, 1.0 * n_grid1_pass);
+    n_pass = (int) ((n_grid1 - n_grid1_rest) / n_grid1_pass);
+
+    printf("n_grid1_pass = %d\n", n_grid1_pass);
+    printf("n_grid1_rest = %d\n", n_grid1_rest);
+    printf("n_pass = %d\n", n_pass);
+    
+    size_2 = 4 * n_grid1_pass * n_grid2 * sizeof(double);
+    kk0 = n_grid1_pass * n_grid2;
+
+    checkCudaErrors(cudaMalloc((void**)&d_grad1_u12, size_2), "cudaMalloc", __FILE__, __LINE__);
+
+
+    for (i_pass = 0; i_pass < n_pass; i_pass++) {
+
+        ii = i_pass * n_grid1_pass;
+
+        tc_int_bh(nBlocks, blockSize,
+                  ii, n_grid1, n_grid2, n_nuc, size_bh,
+                  d_r1, d_r2, d_rn,
+                  d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                  d_grad1_u12);
+
+        cudaDeviceSynchronize();
+
+        for (m = 0; m < 4; m++) {
+            jj = jj0 * (ii + m * n_grid1);
+            kk = kk0 * m;
+            checkCublasErrors( cublasDgemm( myhandle
+                                          , CUBLAS_OP_T, CUBLAS_OP_N
+                                          , n_ao*n_ao, n_grid1_pass, n_grid2
+                                          , &alpha
+                                          , &d_int_fct_long_range[0], n_grid2
+                                          , &d_grad1_u12[kk], n_grid2
+                                          , &beta
+                                          , &d_int2_grad1_u12_ao[jj], n_ao*n_ao )
+                             , "cublasDgemm", __FILE__, __LINE__);
+        }
+
+    }
+
+    if(n_grid1_rest > 0) {
+
+        ii = n_pass * n_grid1_pass;
+
+        tc_int_bh(nBlocks, blockSize,
+                  ii, n_grid1, n_grid2, n_nuc, size_bh,
+                  d_r1, d_r2, d_rn,
+                  d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                  d_grad1_u12);
+
+        cudaDeviceSynchronize();
+
+        for (m = 0; m < 4; m++) {
+            jj = jj0 * (ii + m * n_grid1);
+            kk = kk0 * m;
+            checkCublasErrors( cublasDgemm( myhandle
+                                          , CUBLAS_OP_T, CUBLAS_OP_N
+                                          , n_ao*n_ao, n_grid1_rest, n_grid2
+                                          , &alpha
+                                          , &d_int_fct_long_range[0], n_grid2
+                                          , &d_grad1_u12[kk], n_grid2
+                                          , &beta
+                                          , &d_int2_grad1_u12_ao[jj], n_ao*n_ao )
+                             , "cublasDgemm", __FILE__, __LINE__);
+        }
+
+    }
+
+
     // // //
 
 
 
-
-    cudaMemcpy(h_int_fct_long_range, d_int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double), cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_grad1_u12, d_grad1_u12, 4 * n_grid1 * n_grid2 * sizeof(double), cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, 4 * n_grid1 * n_ao * n_ao * sizeof(double), cudaMemcpyDeviceToHost);
+    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_3, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
 
-    cudaFree(d_r1);
-    cudaFree(d_r2);
-    cudaFree(d_wr2);
-    cudaFree(d_rn);
+    checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_r2), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_wr2), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_rn), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_aos_data2);
+    checkCudaErrors(cudaFree(d_aos_data2), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_c_bh);
-    cudaFree(d_m_bh);
-    cudaFree(d_n_bh);
-    cudaFree(d_o_bh);
+    checkCudaErrors(cudaFree(d_c_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_m_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_n_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_o_bh), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_int_fct_long_range);
-    cudaFree(d_grad1_u12);
-    cudaFree(d_int2_grad1_u12_ao);
+    checkCudaErrors(cudaFree(d_int_fct_long_range), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_grad1_u12), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_int2_grad1_u12_ao), "cudaFree", __FILE__, __LINE__);
 
-    cublasDestroy(myhandle);
+    checkCublasErrors(cublasDestroy(myhandle), "cublasDestroy", __FILE__, __LINE__);
 
     return 0;
 }

@@ -45,10 +45,10 @@ TC_LIBS = $(BUILD_DIR)/lib$(OUTPUT_LIB).so
 all: $(TARGET) $(TARGET_DEB)
 
 $(TARGET): $(TC_LIBS) $(F_OBJ) $(MAIN_OBJ)
-	$(FC) $^ -o $@ $(CUDA_LIBS) -l$(OUTPUT_LIB) -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR)
+	$(FC) $^ -o $@ $(CUDA_LIBS) -l$(OUTPUT_LIB) -L$(BUILD_DIR) -I$(INC_DIR) -Wl,-rpath,$(BUILD_DIR)
 
 $(TC_LIBS): $(KERNEL_OBJ) $(C_OBJ)
-	$(NVCC) $(NFLAGS) $(NLDFLAGS) $^ -o $@ $(CUDA_LIBS)
+	$(NVCC) $(NFLAGS) $(NLDFLAGS) $^ -o $@ $(CUDA_LIBS) -I$(INC_DIR)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cu
 	$(NVCC) $(NFLAGS) -c $< -o $@ -I$(INC_DIR)

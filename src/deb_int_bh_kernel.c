@@ -42,25 +42,25 @@ int deb_int_bh_kernel(int nBlocks, int blockSize,
     size_r2 = 3 * n_grid2 * sizeof(double);
     size_rn = 3 * n_nuc * sizeof(double);
 
-    cudaMalloc((void**)&d_c_bh, size_jbh_d);
-    cudaMalloc((void**)&d_m_bh, size_jbh_i);
-    cudaMalloc((void**)&d_n_bh, size_jbh_i);
-    cudaMalloc((void**)&d_o_bh, size_jbh_i);
+    checkCudaErrors(cudaMalloc((void**)&d_c_bh, size_jbh_d), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_m_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_n_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_o_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMalloc((void**)&d_r1, size_r1);
-    cudaMalloc((void**)&d_r2, size_r2);
-    cudaMalloc((void**)&d_rn, size_rn);
+    checkCudaErrors(cudaMalloc((void**)&d_r1, size_r1), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_r2, size_r2), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_rn, size_rn), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
 
-    cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
 
-    cudaMalloc((void**)&d_grad1_u12, 4 * n_grid1 * n_grid2 * sizeof(double));
+    checkCudaErrors(cudaMalloc((void**)&d_grad1_u12, 4 * n_grid1 * n_grid2 * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
     ii = 0;
     tc_int_bh(nBlocks, blockSize, 
@@ -72,18 +72,19 @@ int deb_int_bh_kernel(int nBlocks, int blockSize,
     cudaDeviceSynchronize();
 
 
-    cudaMemcpy(h_grad1_u12, d_grad1_u12, 4 * n_grid1 * n_grid2 * sizeof(double), cudaMemcpyDeviceToHost);
+    checkCudaErrors(cudaMemcpy(h_grad1_u12, d_grad1_u12, 4 * n_grid1 * n_grid2 * sizeof(double), cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
-    cudaFree(d_c_bh);
-    cudaFree(d_m_bh);
-    cudaFree(d_n_bh);
-    cudaFree(d_o_bh);
 
-    cudaFree(d_r1);
-    cudaFree(d_r2);
-    cudaFree(d_rn);
+    checkCudaErrors(cudaFree(d_c_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_m_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_n_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_o_bh), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_grad1_u12);
+    checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_r2), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_rn), "cudaFree", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaFree(d_grad1_u12), "cudaFree", __FILE__, __LINE__);
 
     return 0;
 }

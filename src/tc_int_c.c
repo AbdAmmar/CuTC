@@ -11,7 +11,6 @@
 
 
 extern void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
-                                  cublasHandle_t handle,
                                   int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
                                   int n_grid1_pass, int n_grid1_rest, int n_pass,
                                   double *r1, double *r2, double *wr2, double *rn, double *aos_data2,
@@ -19,7 +18,6 @@ extern void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
                                   double *int2_grad1_u12_ao);
 
 extern void get_int_2e_ao(int nBlocks, int blockSize,
-                          cublasHandle_t handle,
                           int n_grid1, int n_ao, double *wr1, double *aos_data1,
                           double *int2_grad1_u12_ao, double *tc_int_2e_ao);
 
@@ -52,9 +50,6 @@ int tc_int_c(int nBlocks, int blockSize,
     size_t size_int1, size_int2;
     size_t size_jbh_d, size_jbh_i;
 
-    cublasHandle_t handle;
-
-    cublasCreate(&handle);
 
 
 
@@ -71,47 +66,51 @@ int tc_int_c(int nBlocks, int blockSize,
     size_int1 = 4 * n_grid1 * n_ao * n_ao * sizeof(double);
 
 
-    cudaMalloc((void**)&d_c_bh, size_jbh_d);
-    cudaMalloc((void**)&d_m_bh, size_jbh_i);
-    cudaMalloc((void**)&d_n_bh, size_jbh_i);
-    cudaMalloc((void**)&d_o_bh, size_jbh_i);
+    checkCudaErrors(cudaMalloc((void**)&d_c_bh, size_jbh_d), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_m_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_n_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_o_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
 
 
-    cudaMalloc((void**)&d_r1, size_r1);
+    checkCudaErrors(cudaMalloc((void**)&d_r1, size_r1), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMalloc((void**)&d_r2, size_r2);
-    cudaMalloc((void**)&d_wr2, size_wr2);
+    checkCudaErrors(cudaMalloc((void**)&d_r2, size_r2), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_wr2, size_wr2), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMalloc((void**)&d_rn, size_rn);
+    checkCudaErrors(cudaMalloc((void**)&d_rn, size_rn), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMalloc((void**)&d_aos_data2, size_aos_r2);
+    checkCudaErrors(cudaMalloc((void**)&d_aos_data2, size_aos_r2), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMalloc((void**)&d_int2_grad1_u12_ao, size_int1);
-
-
-    cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice);
-
-    cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice);
-
-    cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice);
-
-    cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice);
-
-    cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMalloc((void**)&d_int2_grad1_u12_ao, size_int1), "cudaMalloc", __FILE__, __LINE__);
 
 
-    //         1 GB
-    n_tmp = (1.0e9 / 8.0) / (4.0 * (double) n_grid2);
+    checkCudaErrors(cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+
+
+    //      amount in GB
+    n_tmp = (1.e9 / 8.0) / (4.0 * (double) n_grid2);
     if(n_tmp < 1.0*n_grid1) {
-        n_grid1_pass = (int) n_tmp;
+        if(n_tmp > 1.0) {
+            n_grid1_pass = (int) n_tmp;
+        } else {
+            n_grid1_pass = 1;
+        }
     } else {
         n_grid1_pass = n_grid1;
     }
-    n_grid1_pass = n_grid1;
+
 
     n_grid1_rest = (int) fmod(1.0 * n_grid1, 1.0 * n_grid1_pass);
     n_pass = (int) ((n_grid1 - n_grid1_rest) / n_grid1_pass);
@@ -121,7 +120,6 @@ int tc_int_c(int nBlocks, int blockSize,
     printf("n_pass = %d\n", n_pass);
 
     get_int2_grad1_u12_ao(nBlocks, blockSize, 
-                          handle,
                           n_grid1, n_grid2, n_ao, n_nuc, size_bh,
                           n_grid1_pass, n_grid1_rest, n_pass,
                           d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
@@ -129,19 +127,19 @@ int tc_int_c(int nBlocks, int blockSize,
                           d_int2_grad1_u12_ao);
 
 
-    cudaFree(d_c_bh);
-    cudaFree(d_m_bh);
-    cudaFree(d_n_bh);
-    cudaFree(d_o_bh);
+    checkCudaErrors(cudaFree(d_c_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_m_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_n_bh), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_o_bh), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_r1);
+    checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_r2);
-    cudaFree(d_wr2);
+    checkCudaErrors(cudaFree(d_r2), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_wr2), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_rn);
+    checkCudaErrors(cudaFree(d_rn), "cudaFree", __FILE__, __LINE__);
 
-    cudaFree(d_aos_data2);
+    checkCudaErrors(cudaFree(d_aos_data2), "cudaFree", __FILE__, __LINE__);
 
     // // //
 
@@ -153,19 +151,18 @@ int tc_int_c(int nBlocks, int blockSize,
     size_aos_r1 = 4 * n_grid1 * n_ao * sizeof(double);
     size_int2 = n_ao * n_ao * n_ao * n_ao * sizeof(double);
 
-    cudaMalloc((void**)&d_wr1, size_wr1);
-    cudaMalloc((void**)&d_aos_data1, size_aos_r1);
-    cudaMalloc((void**)&d_int_2e_ao, size_int2);
+    checkCudaErrors(cudaMalloc((void**)&d_wr1, size_wr1), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_aos_data1, size_aos_r1), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_int_2e_ao, size_int2), "cudaMalloc", __FILE__, __LINE__);
 
-    cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice);
-    cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice);
+    checkCudaErrors(cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
 
     get_int_2e_ao(nBlocks, blockSize, 
-                  handle,
                   n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
 
-    cudaFree(d_wr1);
-    cudaFree(d_aos_data1);
+    checkCudaErrors(cudaFree(d_wr1), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_aos_data1), "cudaFree", __FILE__, __LINE__);
 
     // // //
 
@@ -173,15 +170,13 @@ int tc_int_c(int nBlocks, int blockSize,
 
     // transfer data to Host
 
-    cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1, cudaMemcpyDeviceToHost);
-    cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost);
+    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
-    cudaFree(d_int2_grad1_u12_ao);
-    cudaFree(d_int_2e_ao);
+    checkCudaErrors(cudaFree(d_int2_grad1_u12_ao), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_int_2e_ao), "cudaFree", __FILE__, __LINE__);
 
     // // //
-
-    cublasDestroy(handle);
 
     return 0;
 }

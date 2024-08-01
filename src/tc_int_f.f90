@@ -22,8 +22,10 @@ program tc_int
     nBlocks = 100
     blockSize = 32
 
-    n_grid1 = 6667
-    n_grid2 = 60730
+    n_grid1 = 10
+    n_grid2 = 100
+    !n_grid1 = 6667
+    !n_grid2 = 60730
 
     n_ao = 95
     n_nuc = 3

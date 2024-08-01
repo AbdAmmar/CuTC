@@ -3,9 +3,9 @@
 
 #include "jast_bh.cuh"
 #include "long_range_integ.cuh"
+#include "utils.cuh"
 
 extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
-                                      cublasHandle_t handle,
                                       int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
                                       int n_grid1_pass, int n_grid1_rest, int n_pass,
                                       double *r1, double *r2, double *wr2, double *rn, double *aos_data2,
@@ -25,7 +25,7 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
 
     cublasHandle_t myhandle;
 
-    cublasCreate(&myhandle);
+    checkCublasErrors(cublasCreate(&myhandle), "cublasCreate", __FILE__, __LINE__);
 
     alpha = 1.0;
     beta = 0.0;
@@ -33,12 +33,12 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
     jj0 = n_ao * n_ao;
     kk0 = n_grid1_pass * n_grid2;
 
-    cudaMalloc((void**)&int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double));
+    checkCudaErrors(cudaMalloc((void**)&int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
     int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
 
 
-    cudaMalloc((void**)&grad1_u12, 4 * n_grid1_pass * n_grid2 * sizeof(double));
+    checkCudaErrors(cudaMalloc((void**)&grad1_u12, 4 * n_grid1_pass * n_grid2 * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
     for (i_pass = 0; i_pass < n_pass; i_pass++) {
 
@@ -54,14 +54,15 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
         for (m = 0; m < 4; m++) {
             jj = jj0 * (ii + m * n_grid1);
             kk = kk0 * m;
-            cublasDgemm( myhandle
-                       , CUBLAS_OP_T, CUBLAS_OP_N
-                       , n_ao*n_ao, n_grid1_pass, n_grid2
-                       , &alpha
-                       , &int_fct_long_range[0], n_grid2
-                       , &grad1_u12[kk], n_grid2
-                       , &beta
-                       , &int2_grad1_u12_ao[jj], n_ao*n_ao );
+            checkCublasErrors( cublasDgemm( myhandle
+                                          , CUBLAS_OP_T, CUBLAS_OP_N
+                                          , n_ao*n_ao, n_grid1_pass, n_grid2
+                                          , &alpha
+                                          , &int_fct_long_range[0], n_grid2
+                                          , &grad1_u12[kk], n_grid2
+                                          , &beta
+                                          , &int2_grad1_u12_ao[jj], n_ao*n_ao )
+                             , "cublasDgemm", __FILE__, __LINE__);
         }
 
     }
@@ -80,23 +81,24 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
         for (m = 0; m < 4; m++) {
             jj = jj0 * (ii + m * n_grid1);
             kk = kk0 * m;
-            cublasDgemm( myhandle
-                       , CUBLAS_OP_T, CUBLAS_OP_N
-                       , n_ao*n_ao, n_grid1_rest, n_grid2
-                       , &alpha
-                       , &int_fct_long_range[0], n_grid2
-                       , &grad1_u12[kk], n_grid2
-                       , &beta
-                       , &int2_grad1_u12_ao[jj], n_ao*n_ao );
+            checkCublasErrors( cublasDgemm( myhandle
+                                          , CUBLAS_OP_T, CUBLAS_OP_N
+                                          , n_ao*n_ao, n_grid1_rest, n_grid2
+                                          , &alpha
+                                          , &int_fct_long_range[0], n_grid2
+                                          , &grad1_u12[kk], n_grid2
+                                          , &beta
+                                          , &int2_grad1_u12_ao[jj], n_ao*n_ao )
+                             , "cublasDgemm", __FILE__, __LINE__);
         }
 
     }
 
 
-    cublasDestroy(myhandle);
+    checkCublasErrors(cublasDestroy(myhandle), "cublasDestroy", __FILE__, __LINE__);
 
-    cudaFree(int_fct_long_range);
-    cudaFree(grad1_u12);
+    checkCudaErrors(cudaFree(int_fct_long_range), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(grad1_u12), "cudaFree", __FILE__, __LINE__);
 
 }
 
