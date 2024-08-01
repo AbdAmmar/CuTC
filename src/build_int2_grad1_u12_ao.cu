@@ -44,7 +44,8 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
 
         ii = i_pass * n_grid1_pass;
   
-        tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1, n_grid2, n_nuc, size_bh,
+        tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1_pass, n_grid1_pass,
+                                                 n_grid1, n_grid2, n_nuc, size_bh,
                                                  r1, r2, rn,
                                                  c_bh, m_bh, n_bh, o_bh,
                                                  grad1_u12);
@@ -71,7 +72,8 @@ extern "C" void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
 
         ii = n_pass * n_grid1_pass;
      
-        tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1, n_grid2, n_nuc, size_bh,
+        tc_int_bh_kernel<<<nBlocks, blockSize>>>(ii, n_grid1_rest, n_grid1_pass,
+                                                 n_grid1, n_grid2, n_nuc, size_bh,
                                                  r1, r2, rn,
                                                  c_bh, m_bh, n_bh, o_bh,
                                                  grad1_u12);

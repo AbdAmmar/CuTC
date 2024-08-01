@@ -7,8 +7,11 @@
 #include <math.h>
 
 
+extern void checkCudaErrors(cudaError_t err, const char* msg, const char* file, int line);
+
 extern void tc_int_bh(int nBlocks, int blockSize,
-                      int ii0, int n_grid1, int n_grid2, int n_nuc, int size_bh,
+                      int ii0, int n_grid1_eff, int n_grid1_tot,
+                      int n_grid1, int n_grid2, int n_nuc, int size_bh,
                       double *r1, double *r2, double *rn,
                       double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                       double *grad1_u12);
@@ -64,7 +67,8 @@ int deb_int_bh_kernel(int nBlocks, int blockSize,
 
     ii = 0;
     tc_int_bh(nBlocks, blockSize, 
-              ii, n_grid1, n_grid2, n_nuc, size_bh,
+              ii, n_grid1, n_grid1,
+              n_grid1, n_grid2, n_nuc, size_bh,
               d_r1, d_r2, d_rn,
               d_c_bh, d_m_bh, d_n_bh, d_o_bh,
               d_grad1_u12);

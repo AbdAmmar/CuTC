@@ -8,13 +8,19 @@
 #include <cublas_v2.h>
 
 
+
+extern void checkCudaErrors(cudaError_t err, const char* msg, const char* file, int line);
+extern void checkCublasErrors(cublasStatus_t status, const char* msg, const char* file, int line);
+
+
 extern void int_long_range(int nBlocks, int blockSize,
                            int n_grid2, int n_ao, double *wr2, double* aos_data2,
                            double *int_fct_long_range);
 
 
 extern void tc_int_bh(int nBlocks, int blockSize,
-                      int ii0, int n_grid1, int n_grid2, int n_nuc, int size_bh,
+                      int ii0, int n_grid1_eff, int n_grid1_tot,
+                      int n_grid1, int n_grid2, int n_nuc, int size_bh,
                       double *r1, double *r2, double *rn,
                       double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                       double *grad1_u12);
@@ -33,9 +39,6 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
     int n_grid1_pass, n_grid1_rest, n_pass;
     double n_tmp;
 
-    int i, j;
-    int ipoint, jpoint;
-    int ll;
     int m;
     double alpha, beta;
 
@@ -124,7 +127,7 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
     beta = 0.0;
 
     //       amount in GB
-    n_tmp = (0.001e9 / 8.0) / (4.0 * (double) n_grid2);
+    n_tmp = (1.0e9 / 8.0) / (4.0 * (double) n_grid2);
     if(n_tmp < 1.0*n_grid1) {
         if(n_tmp > 1.0) {
             n_grid1_pass = (int) n_tmp;
@@ -153,7 +156,8 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
         ii = i_pass * n_grid1_pass;
 
         tc_int_bh(nBlocks, blockSize,
-                  ii, n_grid1, n_grid2, n_nuc, size_bh,
+                  ii, n_grid1_pass, n_grid1_pass,
+                  n_grid1, n_grid2, n_nuc, size_bh,
                   d_r1, d_r2, d_rn,
                   d_c_bh, d_m_bh, d_n_bh, d_o_bh,
                   d_grad1_u12);
@@ -181,7 +185,8 @@ int deb_int2_grad1_u12_ao(int nBlocks, int blockSize,
         ii = n_pass * n_grid1_pass;
 
         tc_int_bh(nBlocks, blockSize,
-                  ii, n_grid1, n_grid2, n_nuc, size_bh,
+                  ii, n_grid1_rest, n_grid1_pass,
+                  n_grid1, n_grid2, n_nuc, size_bh,
                   d_r1, d_r2, d_rn,
                   d_c_bh, d_m_bh, d_n_bh, d_o_bh,
                   d_grad1_u12);

@@ -16,10 +16,6 @@ int deb_int_long_range(int nBlocks, int blockSize,
                        int n_grid2, int n_ao, double *h_wr2, double *h_aos_data2,
                        double *h_int_fct_long_range) {
 
-    int i, j;
-    int ipoint, jpoint;
-    int ll;
-
     size_t size_wr2;
     size_t size_aos_r2;
 
@@ -48,17 +44,6 @@ int deb_int_long_range(int nBlocks, int blockSize,
 
 
     cudaMemcpy(h_int_fct_long_range, d_int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double), cudaMemcpyDeviceToHost);
-
-//    for(j = 0; j < n_ao; j++) {
-//        for(i = 0; i < n_ao; i++) {
-//            for(jpoint = 0; i < n_grid2; jpoint++) {
-//                ll = jpoint + i*n_grid2 + j*n_grid2*n_ao;
-//                printf(" %15.7f\n", h_int_fct_long_range[ll]);
-//            }
-//        }
-//    }
-
-
 
     cudaFree(d_wr2);
     cudaFree(d_aos_data2);

@@ -5,10 +5,10 @@ NLDFLAGS = --shared
 
 
 CC = gcc
-CFLAGS = -fPIC -O3 # -Wall #-O0 -g -ggdb
+CFLAGS = -fPIC -O3 # -Wall -g -ggdb
 
 FC = gfortran
-FFLAGS = -O3#-O0 -g -Wall -ggdb
+FFLAGS = -O3 # -Wall -g -ggdb
 
 
 SRC_DIR = src

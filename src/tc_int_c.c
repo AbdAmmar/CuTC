@@ -8,6 +8,9 @@
 #include <cublas_v2.h>
 
 
+extern void checkCudaErrors(cudaError_t err, const char* msg, const char* file, int line);
+extern void checkCublasErrors(cublasStatus_t status, const char* msg, const char* file, int line);
+
 
 
 extern void get_int2_grad1_u12_ao(int nBlocks, int blockSize,
