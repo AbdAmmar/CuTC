@@ -56,6 +56,7 @@ int deb_int2_grad1_u12_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSi
     size_t size_aos_r2;
     size_t size_jbh_d, size_jbh_i;
     size_t size_1, size_2, size_3;
+    size_t free_mem, total_mem;
 
     double *d_r1, *d_r2, *d_wr2, *d_rn;
     double *d_aos_data2;
@@ -182,10 +183,9 @@ int deb_int2_grad1_u12_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSi
     alpha = 1.0;
     beta = 0.0;
 
-    //       amount in GB
-    // TODO get available memory
-    // cudaMemGetInfo
-    n_tmp = (5.0e9 / 8.0) / (4.0 * (double) n_grid2);
+    checkCudaErrors(cudaMemGetInfo(&free_mem, &total_mem), "cudaMemGetInfo", __FILE__, __LINE__);
+    n_tmp = (free_mem / 8.0) / (4.0 * (double) n_grid2);
+    //n_tmp = (5.0e9 / 8.0) / (4.0 * (double) n_grid2);
     if(n_tmp < 1.0*n_grid1) {
         if(n_tmp > 1.0) {
             n_grid1_pass = (int) n_tmp;
