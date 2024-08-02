@@ -183,6 +183,8 @@ int deb_int2_grad1_u12_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSi
     beta = 0.0;
 
     //       amount in GB
+    // TODO get available memory
+    // cudaMemGetInfo
     n_tmp = (5.0e9 / 8.0) / (4.0 * (double) n_grid2);
     if(n_tmp < 1.0*n_grid1) {
         if(n_tmp > 1.0) {
@@ -300,11 +302,11 @@ int deb_int2_grad1_u12_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSi
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
     tt4 = time_loc;
 
-    printf("Ellapsed time for transfer data (CPU -> GPU) = %.3f sec\n", time_loc/1000.0f);
-    printf("Ellapsed time for int_long_range kernel = %.3f sec\n", time_loc/1000.0f);
+    printf("Ellapsed time for transfer data (CPU -> GPU) = %.3f sec\n", tt0/1000.0f);
+    printf("Ellapsed time for int_long_range kernel = %.3f sec\n", tt1/1000.0f);
     printf("Ellapsed time for tc_int_bh kernel = %.3f sec\n", tt2/1000.0f);
     printf("Ellapsed time for cublas DGEMM = %.3f sec\n", tt3/1000.0f);
-    printf("Ellapsed time for transfer data (GPU -> CPU) = %.3f sec\n", time_loc/1000.0f);
+    printf("Ellapsed time for transfer data (GPU -> CPU) = %.3f sec\n", tt4/1000.0f);
     printf("Ellapsed time on GPU = %.3f sec\n", (tt0 + tt1 + tt2 + tt3 + tt4)/1000.0f);
 
     checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);

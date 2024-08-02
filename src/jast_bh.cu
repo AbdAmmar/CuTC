@@ -59,11 +59,11 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
     */
 
 
-//    extern __shared__ char shared_data[];
-//    double *shared_c = (double*) shared_data; 
-//    int *shared_m = (int*) (shared_data + n_nuc * size_bh * sizeof(double)); 
-//    int *shared_n = (int*) (shared_data + n_nuc * size_bh * (sizeof(double)+sizeof(int))); 
-//    int *shared_o = (int*) (shared_data + n_nuc * size_bh * (sizeof(double)+2*sizeof(int))); 
+    extern __shared__ char shared_data[];
+    double *shared_c = (double*) shared_data; 
+    int *shared_m = (int*) (shared_data + n_nuc * size_bh * sizeof(double)); 
+    int *shared_n = (int*) (shared_data + n_nuc * size_bh * (sizeof(double)+sizeof(int))); 
+    int *shared_o = (int*) (shared_data + n_nuc * size_bh * (sizeof(double)+2*sizeof(int))); 
 
     int i_grid1, i_grid2;
     int ii_grid1, ii_grid2, ii_nuc, ii_12;
@@ -92,20 +92,20 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
     i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
 
-//    i_grid2 = blockIdx.y * blockDim.y + threadIdx.y;
-//    if((i_grid1 < n_grid1_eff) && (i_grid2 < n_grid2)) {
-//        for(i_nuc = 0; i_nuc < n_nuc; i_nuc++) {
-//            ii_nuc = size_bh * i_nuc;
-//            for(i_bh = 0; i_bh < size_bh; i_bh++) {
-//                kk = i_bh + ii_nuc;
-//                shared_c[kk] = c_bh[kk];
-//                shared_m[kk] = m_bh[kk];
-//                shared_n[kk] = n_bh[kk];
-//                shared_o[kk] = o_bh[kk];
-//            }
-//        }
-//    }
-//    __syncthreads();
+    i_grid2 = blockIdx.y * blockDim.y + threadIdx.y;
+    if((i_grid1 < n_grid1_eff) && (i_grid2 < n_grid2)) {
+        for(i_nuc = 0; i_nuc < n_nuc; i_nuc++) {
+            ii_nuc = size_bh * i_nuc;
+            for(i_bh = 0; i_bh < size_bh; i_bh++) {
+                kk = i_bh + ii_nuc;
+                shared_c[kk] = c_bh[kk];
+                shared_m[kk] = m_bh[kk];
+                shared_n[kk] = n_bh[kk];
+                shared_o[kk] = o_bh[kk];
+            }
+        }
+    }
+    __syncthreads();
 
 
     ii_12 = n_grid1_tot * n_grid2;
@@ -197,19 +197,12 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
                     kk = i_bh + ii_nuc;
 
-                    //c = shared_c[kk];
-                    //if(fabs(c) < 1e-10)
-                    //    continue;
-                    //m = shared_m[kk];
-                    //n = shared_n[kk];
-                    //o = shared_o[kk];
-
-                    c = c_bh[kk];
+                    c = shared_c[kk];
                     if(fabs(c) < 1e-10)
                         continue;
-                    m = m_bh[kk];
-                    n = n_bh[kk];
-                    o = o_bh[kk];
+                    m = shared_m[kk];
+                    n = shared_n[kk];
+                    o = shared_o[kk];
 
                     // TODO remove
                     if(m == n)
@@ -281,10 +274,9 @@ extern "C" void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
                           double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                           double *grad1_u12) {
 
-    //size_t size_sh;
-    //size_sh = n_nuc * size_bh * (sizeof(double) + 3 * sizeof(int));
-    //tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh>>>(ii0, n_grid1_eff, n_grid1_tot,
-    tc_int_bh_kernel<<<dimGrid, dimBlock>>>(ii0, n_grid1_eff, n_grid1_tot,
+    size_t size_sh;
+    size_sh = n_nuc * size_bh * (sizeof(double) + 3 * sizeof(int));
+    tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh>>>(ii0, n_grid1_eff, n_grid1_tot,
                                                      n_grid1, n_grid2, n_nuc, size_bh,
                                                      r1, r2, rn, 
                                                      c_bh, m_bh, n_bh, o_bh,
