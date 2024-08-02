@@ -22,8 +22,8 @@ $(shell mkdir -p $(BUILD_DIR))
 KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
 KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR)/%.o)
 
-C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int_long_range.c $(SRC_DIR)/deb_int_bh_kernel.c $(SRC_DIR)/deb_int2_grad1_u12_ao.c
-C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int_long_range.o $(BUILD_DIR)/deb_int_bh_kernel.o $(BUILD_DIR)/deb_int2_grad1_u12_ao.o
+C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int2_grad1_u12_ao.c
+C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int2_grad1_u12_ao.o
 
 F_SRC = $(SRC_DIR)/gpu_module.f90
 F_OBJ = $(BUILD_DIR)/gpu_module.o
@@ -42,7 +42,7 @@ CUDA_LIBS = -lcudart -lcublas
 
 TC_LIBS = $(BUILD_DIR)/lib$(OUTPUT_LIB).so
 
-all: $(TARGET) $(TARGET_DEB)
+all: $(TARGET) 
 
 $(TARGET): $(TC_LIBS) $(F_OBJ) $(MAIN_OBJ)
 	$(FC) $^ -o $@ $(CUDA_LIBS) -l$(OUTPUT_LIB) -L$(BUILD_DIR) -I$(INC_DIR) -Wl,-rpath,$(BUILD_DIR)
@@ -89,6 +89,6 @@ $(BUILD_DIR)/deb_binding.o: $(SRC_DIR)/deb_binding.f90
 
 .PHONY: clean
 clean:
-	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/*.so $(BUILD_DIR)/*.mod $(TARGET)
+	rm -f $(BUILD_DIR)/*.o $(BUILD_DIR)/*.so $(BUILD_DIR)/*.mod $(BIN_DIR)/*
 
 

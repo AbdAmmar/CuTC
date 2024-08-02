@@ -5,7 +5,6 @@
 #include <cublas_v2.h>
 
 
-
 extern "C" void checkCudaErrors(cudaError_t err, const char* msg, const char* file, int line) {
     if (err != cudaSuccess) {
         printf("CUDA Error in %s at line %d\n", file, line);
@@ -51,5 +50,6 @@ extern "C" void checkCublasErrors(cublasStatus_t status, const char* msg, const 
         exit(0);
     }
 }
+
 
 
