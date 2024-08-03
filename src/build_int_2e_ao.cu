@@ -4,6 +4,7 @@
 #include "short_range_integ_herm.cuh"
 #include "short_range_integ_nonherm.cuh"
 #include "utils.cuh"
+#include "add_trans_inplace.cuh"
 
 
 extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
@@ -26,7 +27,12 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
     checkCudaErrors(cudaMalloc((void**)&int_fct_short_range_herm, n_grid1 * n_ao * n_ao * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
     int_short_range_herm_kernel<<<nBlocks, blockSize>>>(n_grid1, n_ao, wr1, aos_data1, int_fct_short_range_herm);
-    cudaDeviceSynchronize();
+
+    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+
+    alpha = 1.0;
+    beta = 0.0;
 
     checkCublasErrors( cublasDgemm( handle
                                   , CUBLAS_OP_N, CUBLAS_OP_N
@@ -50,7 +56,10 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
 
     int_short_range_nonherm_kernel<<<nBlocks, blockSize>>>(n_grid1, n_ao, wr1, aos_data1, int_fct_short_range_nonherm);
 
-    alpha = -1.0;
+    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+
+    alpha = -0.5;
     beta = 1.0;
     checkCublasErrors( cublasDgemm( handle
                                   , CUBLAS_OP_N, CUBLAS_OP_N
@@ -69,17 +78,14 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
 
     // int_2e_ao <-- int_2e_ao + int_2e_ao.T
 
-    alpha = 1.0;
-    beta = 1.0;
-    checkCublasErrors( cublasDgeam( handle
-                                  , CUBLAS_OP_T, CUBLAS_OP_N
-                                  , n_ao*n_ao, n_ao*n_ao
-                                  , &alpha
-                                  , &int_2e_ao[0], n_ao*n_ao
-                                  , &beta
-                                  , &int_2e_ao[0], n_ao*n_ao
-                                  , &int_2e_ao[0], n_ao*n_ao )
-                     , "cublasDgeam", __FILE__, __LINE__);
+    int sBlocks = 32;
+    int nbBlocks = (n_ao*n_ao + sBlocks - 1) / sBlocks;
+
+    dim3 dimGrid(nbBlocks, nbBlocks, 1);
+    dim3 dimBlock(sBlocks, sBlocks, 1);
+
+    trans_inplace_kernel<<<dimGrid, dimBlock>>>(int_2e_ao, n_ao*n_ao);
+    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
     // // //
 

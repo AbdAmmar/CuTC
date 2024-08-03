@@ -33,6 +33,8 @@ extern void int_short_range_nonherm(int nBlocks, int blockSize,
                                     double* wr1, double* aos_data1, 
                                     double* int_fct_short_range_nonherm);
 
+extern void trans_inplace(double *data, int size);
+
 
 int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int blockySize, int blockzSize,
                   int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
@@ -115,6 +117,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
     printf("Grid Size: (%u, %u, %u)\n", dimGrid.x, dimGrid.y, dimGrid.z);
     printf("Block Size: (%u, %u, %u)\n", dimBlock.x, dimBlock.y, dimBlock.z);
 
+    printf("Shared memory per block: %.2f KB\n", deviceProp.sharedMemPerBlock/(1024.0));
 
     // used for timing
     checkCudaErrors(cudaEventCreate(&start_loc), "cudaEventCreate", __FILE__, __LINE__);
@@ -385,6 +388,8 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     int_short_range_nonherm(nxBlocks, blockxSize, n_grid1, n_ao, d_wr1, d_aos_data1, d_int_fct_short_range_nonherm);
+    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
@@ -413,22 +418,10 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
     // A + A.T
 
-    double *d_int_2e_ao_tmp;
-    checkCudaErrors(cudaMalloc((void**)&d_int_2e_ao_tmp, size_4), "cudaMalloc", __FILE__, __LINE__);
-
-    alpha = 1.0;
-    beta = 1.0;
-
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCublasErrors( cublasDgeam( myhandle
-                                  , CUBLAS_OP_T, CUBLAS_OP_N
-                                  , n_ao*n_ao, n_ao*n_ao
-                                  , &alpha
-                                  , &d_int_2e_ao[0], n_ao*n_ao
-                                  , &beta
-                                  , &d_int_2e_ao[0], n_ao*n_ao
-                                  , &d_int_2e_ao_tmp[0], n_ao*n_ao )
-                     , "cublasDgeam", __FILE__, __LINE__);
+    trans_inplace(d_int_2e_ao, n_ao*n_ao);
+    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
@@ -446,7 +439,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_3, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
-    checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao_tmp, size_4, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_4, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
@@ -454,7 +447,6 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
     checkCudaErrors(cudaFree(d_int2_grad1_u12_ao), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_int_2e_ao), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_int_2e_ao_tmp), "cudaFree", __FILE__, __LINE__);
 
 
 
@@ -467,7 +459,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
     printf("Ellapsed time for cublas DGEMM of Hermitian part of 2e-integ = %.3f sec\n", tt5/1000.0f);
     printf("Ellapsed time for int_short_range_nonherm_kernel kernel = %.3f sec\n", tt6/1000.0f);
     printf("Ellapsed time for cublas DGEMM of non-Hermitian part of 2e-integ = %.3f sec\n", tt7/1000.0f);
-    printf("Ellapsed time for cublas DGEAM %.3f sec\n", tt8/1000.0f);
+    printf("Ellapsed time for I + I.T %.3f sec\n", tt8/1000.0f);
     printf("Ellapsed time for transfer data (GPU -> CPU) = %.3f sec\n", tt9/1000.0f);
     printf("Ellapsed time on GPU = %.3f sec\n", (tt0 + tt1 + tt2 + tt3 + tt4 + tt5 + tt6 + tt7 + tt8 + tt9)/1000.0f);
 

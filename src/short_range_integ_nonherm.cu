@@ -21,7 +21,7 @@ __global__ void int_short_range_nonherm_kernel(int n_grid1, int n_ao, double *wr
 
     while(i_grid1 < n_grid1) {
 
-        wr1_tmp = 0.5 * wr1[i_grid1];
+        wr1_tmp = wr1[i_grid1];
 
         for(i_ao = 0; i_ao < n_ao; i_ao++) {
 
@@ -41,7 +41,7 @@ __global__ void int_short_range_nonherm_kernel(int n_grid1, int n_ao, double *wr
 
                 for(m = 0; m < 3; m++) {
 
-                    mm = (m+1) * n_ao * n_grid1;
+                    mm = (m + 1) * n_ao * n_grid1;
 
                     ii1_ao = ii0_ao + mm;
                     jj1_ao = jj0_ao + mm;

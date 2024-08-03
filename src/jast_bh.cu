@@ -1,11 +1,9 @@
 
-
-///* compute a**b, where b in [0,10] */
+/* compute a**b, where b in [0,6] */
 __device__ double powd_int(double a, int b) {
 
     double r;
-
-    double a2, a3, a4;
+    double a2;
 
     if (b == 0) {
         r = 1.0;
@@ -24,21 +22,6 @@ __device__ double powd_int(double a, int b) {
     } else if (b == 6) {
         a2 = a * a;
         r = a2 * a2 * a2;
-    } else if (b == 7) {
-        a2 = a * a;
-        a3 = a2 * a;
-        r = a2 * a2 * a3;
-    } else if (b == 8) {
-        a2 = a * a;
-        a4 = a2 * a2;
-        r = a4 * a4;
-    } else if (b == 9) {
-        a3 = a * a * a;
-        r = a3 * a3 * a3;
-    } else if (b == 10) {
-        a2 = a * a;
-        a4 = a2 * a2;
-        r = a2 * a4 * a4;
     }
 
     return r;
@@ -60,12 +43,23 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
 
     extern __shared__ char shared_data[];
-    double *shared_c = (double*) shared_data; 
-    int *shared_m = (int*) (shared_data + n_nuc * size_bh * sizeof(double)); 
-    int *shared_n = (int*) (shared_data + n_nuc * size_bh * (sizeof(double)+sizeof(int))); 
-    int *shared_o = (int*) (shared_data + n_nuc * size_bh * (sizeof(double)+2*sizeof(int))); 
 
-    int i_grid1, i_grid2;
+    int *shared_m = (int*) shared_data;
+    int *shared_n = (int*) (shared_data + n_nuc * size_bh * sizeof(int)); 
+    int *shared_o = (int*) (shared_data + 2 * n_nuc * size_bh * sizeof(int)); 
+
+    size_t offset_c, aligned_offset_c;
+    offset_c = 3 * n_nuc * size_bh * sizeof(int);
+    aligned_offset_c = (offset_c + sizeof(double) - 1) & ~(sizeof(double) - 1);
+    double *shared_c = (double*) (shared_data + aligned_offset_c);
+
+    size_t offset_rn, aligned_offset_rn;
+    offset_rn = aligned_offset_c + n_nuc * size_bh * sizeof(double);
+    aligned_offset_rn = (offset_rn + sizeof(double) - 1) & ~(sizeof(double) - 1);
+    double *shared_rn = (double*) (shared_data + aligned_offset_rn);
+
+    int i_grid1;
+    int i_grid2_s, i_grid2;
     int ii_grid1, ii_grid2, ii_nuc, ii_12;
     int i_nuc;
     int i_bh;
@@ -91,19 +85,26 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
 
     i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
+    i_grid2_s = blockIdx.y * blockDim.y + threadIdx.y;
 
-    i_grid2 = blockIdx.y * blockDim.y + threadIdx.y;
-    if((i_grid1 < n_grid1_eff) && (i_grid2 < n_grid2)) {
+    if((i_grid1 < n_grid1_eff) && (i_grid2_s < n_grid2)) {
+
         for(i_nuc = 0; i_nuc < n_nuc; i_nuc++) {
+
             ii_nuc = size_bh * i_nuc;
             for(i_bh = 0; i_bh < size_bh; i_bh++) {
                 kk = i_bh + ii_nuc;
-                shared_c[kk] = c_bh[kk];
                 shared_m[kk] = m_bh[kk];
                 shared_n[kk] = n_bh[kk];
                 shared_o[kk] = o_bh[kk];
+                shared_c[kk] = c_bh[kk];
             }
+
+            shared_rn[3*i_nuc  ] = rn[3*i_nuc  ];
+            shared_rn[3*i_nuc+1] = rn[3*i_nuc+1];
+            shared_rn[3*i_nuc+2] = rn[3*i_nuc+2];
         }
+
     }
     __syncthreads();
 
@@ -119,7 +120,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
         ii_grid1 = i_grid1 * n_grid2;
 
-        i_grid2 = blockIdx.y * blockDim.y + threadIdx.y;
+        i_grid2 = i_grid2_s;
         while(i_grid2 < n_grid2) {
 
             ii_grid2 = ii_grid1 + i_grid2;
@@ -155,9 +156,9 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
             
             for(i_nuc = 0; i_nuc < n_nuc; i_nuc++) {
 
-                rn_x = rn[3*i_nuc  ];
-                rn_y = rn[3*i_nuc+1];
-                rn_z = rn[3*i_nuc+2];
+                rn_x = shared_rn[3*i_nuc  ];
+                rn_y = shared_rn[3*i_nuc+1];
+                rn_z = shared_rn[3*i_nuc+2];
 
                 // e1-n term
                 dx = r1_x - rn_x;
@@ -274,14 +275,32 @@ extern "C" void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
                           double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                           double *grad1_u12) {
 
-    size_t size_sh;
-    size_sh = n_nuc * size_bh * (sizeof(double) + 3 * sizeof(int));
-    tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh>>>(ii0, n_grid1_eff, n_grid1_tot,
-                                                     n_grid1, n_grid2, n_nuc, size_bh,
-                                                     r1, r2, rn, 
-                                                     c_bh, m_bh, n_bh, o_bh,
-                                                     grad1_u12);
-               
+    size_t size_m;
+    size_t size_c;
+    size_t size_rn;
+
+    size_t offset_c, aligned_offset_c;
+    size_t offset_rn, aligned_offset_rn;
+    size_t size_sh_tot;
+
+    size_m = n_nuc * size_bh * sizeof(int);
+    size_c = n_nuc * size_bh * sizeof(double);
+    size_rn = 3 * n_nuc * sizeof(double);
+
+    offset_c = 3 * size_m;
+    aligned_offset_c = (offset_c + sizeof(double) - 1) & ~(sizeof(double) - 1);
+    
+    offset_rn = aligned_offset_c + size_c;
+    aligned_offset_rn = (offset_rn + sizeof(double) - 1) & ~(sizeof(double) - 1);
+
+    size_sh_tot = aligned_offset_rn + size_rn;
+
+    tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_tot>>>(ii0, n_grid1_eff, n_grid1_tot,
+                                                         n_grid1, n_grid2, n_nuc, size_bh,
+                                                         r1, r2, rn, 
+                                                         c_bh, m_bh, n_bh, o_bh,
+                                                         grad1_u12);
+
 }
 
 

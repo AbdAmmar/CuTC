@@ -22,8 +22,8 @@ $(shell mkdir -p $(BUILD_DIR))
 KERNEL_SRC = $(wildcard $(SRC_DIR)/*.cu)
 KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR)/%.o)
 
-C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int2_grad1_u12_ao.c
-C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int2_grad1_u12_ao.o
+C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int_2e_ao.c
+C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int_2e_ao.o
 
 F_SRC = $(SRC_DIR)/gpu_module.f90
 F_OBJ = $(BUILD_DIR)/gpu_module.o
@@ -35,7 +35,6 @@ OUTPUT_BIN = tc_int
 OUTPUT_LIB = tc_int_cu
 
 TARGET = $(BIN_DIR)/$(OUTPUT_BIN)
-TARGET_DEB = $(BIN_DIR)/deb_binding
 
 CUDA_LIBS = -lcudart -lcublas
 
@@ -66,23 +65,6 @@ $(F_OBJ): $(F_SRC)
 $(MAIN_OBJ): $(MAIN_SRC)
 	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
 
-
-
-
-$(TARGET_DEB): $(BUILD_DIR)/libdebbind.so $(BUILD_DIR)/deb_module.o $(BUILD_DIR)/deb_binding.o
-	$(FC) $^ -o $@ $(CUDA_LIBS) -ldebbind -L$(BUILD_DIR) -Wl,-rpath,$(BUILD_DIR)
-
-$(BUILD_DIR)/libdebbind.so: $(BUILD_DIR)/deb_fct_c.o
-	$(NVCC) $(NFLAGS) $(NLDFLAGS) $^ -o $@ $(CUDA_LIBS)
-
-$(BUILD_DIR)/deb_fct_c.o: $(SRC_DIR)/deb_fct_c.c
-	$(CC) $(CFLAGS) -c $< -o $@
-
-$(BUILD_DIR)/deb_module.o: $(SRC_DIR)/deb_module.f90
-	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
-
-$(BUILD_DIR)/deb_binding.o: $(SRC_DIR)/deb_binding.f90
-	$(FC) $(FFLAGS) -c $< -o $@ -J$(BUILD_DIR)
 
 
 
