@@ -26,10 +26,10 @@ The library computes and provides:
 - **Key Tersors for 3-Electron Integrals**: Specifically, the tensors of the form:
 
 $$
-\int d \mathbf{r_2} \chi_\mu(\mathbf{r_2}) \chi_\nu(\mathbf{r_2}) \nabla u(\mathbf{r_1}, \mathbf{r_2})
+\int d \mathbf{r_2} \chi_\mu(\mathbf{r_2}) \chi_\nu(\mathbf{r_2}) \nabla_1 u(\mathbf{r_1}, \mathbf{r_2})
 $$
   
-  where $\nabla u(\mathbf{r_1}, \mathbf{r_2})$ represents the gradient of the function $u$ used to define the Jastrow factor.
+  where $\nabla_1 u(\mathbf{r_1}, \mathbf{r_2})$ represents the gradient of the function $u$ used to define the Jastrow factor.
 
 
 ## Installation
