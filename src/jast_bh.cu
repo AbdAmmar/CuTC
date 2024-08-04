@@ -205,10 +205,6 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
                     n = shared_n[kk];
                     o = shared_o[kk];
 
-                    // TODO remove
-                    if(m == n)
-                        c *= 0.5;
-
                     f1n_m = 1.0;
                     f2n_m = 1.0;
                     if(m > 0) {

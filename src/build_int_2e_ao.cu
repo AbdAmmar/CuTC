@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include <cublas_v2.h>
 
 #include "short_range_integ_herm.cuh"
@@ -7,8 +8,7 @@
 #include "add_trans_inplace.cuh"
 
 
-extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
-                              int n_grid1, int n_ao, double *wr1, double *aos_data1,
+extern "C" void get_int_2e_ao(int n_grid1, int n_ao, double *wr1, double *aos_data1,
                               double *int2_grad1_u12, double *int_2e_ao) {
 
 
@@ -16,6 +16,13 @@ extern "C" void get_int_2e_ao(int nBlocks, int blockSize,
     double *int_fct_short_range_nonherm;
 
     double alpha, beta;
+
+    int blockSize = 32;
+    int nBlocks = (n_grid1 + blockSize - 1) / blockSize;
+
+    printf("lunching int_short_range_herm_kernel & int_short_range_nonherm_kernel and with %d blocks and %d threads/block\n", 
+            nBlocks, blockSize);
+
 
     cublasHandle_t handle;
 

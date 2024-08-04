@@ -19,8 +19,7 @@ extern void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                   double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                                   double *int2_grad1_u12_ao);
 
-extern void get_int_2e_ao(int nBlocks, int blockSize,
-                          int n_grid1, int n_ao, double *wr1, double *aos_data1,
+extern void get_int_2e_ao(int n_grid1, int n_ao, double *wr1, double *aos_data1,
                           double *int2_grad1_u12_ao, double *tc_int_2e_ao);
 
 
@@ -47,7 +46,7 @@ int tc_int_c(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
     size_t size_r1, size_wr1, size_r2, size_wr2, size_rn;
     size_t size_aos_r1, size_aos_r2;
-    size_t size_int1, size_int2;
+    size_t size_int1, size_int2, size_int1_send;
     size_t size_jbh_d, size_jbh_i;
 
     struct cudaDeviceProp deviceProp;
@@ -97,6 +96,7 @@ int tc_int_c(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     size_jbh_i = size_bh * n_nuc * sizeof(int);
 
     size_int1 = 4 * n_grid1 * n_ao * n_ao * sizeof(double);
+    size_int1_send = 3 * n_grid1 * n_ao * n_ao * sizeof(double);
 
 
 
@@ -166,8 +166,7 @@ int tc_int_c(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
 
-    get_int_2e_ao(dimGrid.x, dimBlock.x,
-                  n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
+    get_int_2e_ao(n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
 
     checkCudaErrors(cudaFree(d_wr1), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_aos_data1), "cudaFree", __FILE__, __LINE__);
@@ -178,7 +177,7 @@ int tc_int_c(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
     // transfer data to Host
 
-    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1_send, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
     checkCudaErrors(cudaFree(d_int2_grad1_u12_ao), "cudaFree", __FILE__, __LINE__);

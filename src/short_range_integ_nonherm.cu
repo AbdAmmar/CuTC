@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 
 __global__ void int_short_range_nonherm_kernel(int n_grid1, int n_ao, double *wr1, double* aos_data1, double *int_fct_short_range_nonherm) {
 
@@ -65,9 +66,15 @@ __global__ void int_short_range_nonherm_kernel(int n_grid1, int n_ao, double *wr
 
 
 
-extern "C" void int_short_range_nonherm(int nBlocks, int blockSize,
-                                        int n_grid1, int n_ao, double *wr1, double* aos_data1,
+extern "C" void int_short_range_nonherm(int n_grid1, int n_ao, double *wr1, double* aos_data1,
                                         double *int_fct_short_range_nonherm) {
+
+    int nBlocks, blockSize;
+
+    blockSize = 32;
+    nBlocks = (n_grid1 + blockSize - 1) / blockSize;
+
+    printf("lunching int_short_range_nonherm_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     int_short_range_nonherm_kernel<<<nBlocks, blockSize>>>(n_grid1, n_ao, wr1, aos_data1, int_fct_short_range_nonherm);
 

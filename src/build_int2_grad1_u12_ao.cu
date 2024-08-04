@@ -29,6 +29,10 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
     double n_tmp;
 
+    int blockSize = 32;
+    int nBlocks = (n_grid1 + blockSize - 1) / blockSize;
+
+    printf("lunching int_long_range_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     size_sh_mem = n_nuc * size_bh * (sizeof(double) + 3 * sizeof(int)) 
                 + 3 * n_nuc * sizeof(double);
@@ -44,7 +48,7 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
     checkCudaErrors(cudaMalloc((void**)&int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
-    int_long_range_kernel<<<dimGrid.x, dimBlock.x>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
+    int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 

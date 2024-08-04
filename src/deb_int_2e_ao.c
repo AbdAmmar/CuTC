@@ -12,8 +12,7 @@ extern void checkCudaErrors(cudaError_t err, const char* msg, const char* file, 
 extern void checkCublasErrors(cublasStatus_t status, const char* msg, const char* file, int line);
 
 
-extern void int_long_range(int nBlocks, int blockSize,
-                           int n_grid2, int n_ao, double *wr2, double* aos_data2,
+extern void int_long_range(int n_grid2, int n_ao, double *wr2, double* aos_data2,
                            double *int_fct_long_range);
 
 
@@ -24,12 +23,10 @@ extern void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
                       double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                       double *grad1_u12);
 
-extern void int_short_range_herm(int nBlocks, int blockSize, 
-                                 int n_grid1, int n_ao, double* wr1, double* aos_data1, 
+extern void int_short_range_herm(int n_grid1, int n_ao, double* wr1, double* aos_data1, 
                                  double* int_fct_short_range_herm);
 
-extern void int_short_range_nonherm(int nBlocks, int blockSize, 
-                                    int n_grid1, int n_ao, 
+extern void int_short_range_nonherm(int n_grid1, int n_ao, 
                                     double* wr1, double* aos_data1, 
                                     double* int_fct_short_range_nonherm);
 
@@ -62,7 +59,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
     size_t size_r1, size_r2, size_wr2, size_rn;
     size_t size_aos_r2;
     size_t size_jbh_d, size_jbh_i;
-    size_t size_1, size_2, size_3;
+    size_t size_1, size_2, size_3, size_3_send;
 
     size_t size_wr1, size_aos_r1;
     size_t size_4;
@@ -138,6 +135,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
     size_1 = n_grid2 * n_ao * n_ao * sizeof(double);
     size_3 = 4 * n_grid1 * n_ao * n_ao * sizeof(double);
+    size_3_send = 3 * n_grid1 * n_ao * n_ao * sizeof(double);
 
 
     checkCudaErrors(cudaMalloc((void**)&d_r1, size_r1), "cudaMalloc", __FILE__, __LINE__);
@@ -175,7 +173,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
     // // //
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    int_long_range(nxBlocks, blockxSize, n_grid2, n_ao, d_wr2, d_aos_data2, d_int_fct_long_range);
+    int_long_range(n_grid2, n_ao, d_wr2, d_aos_data2, d_int_fct_long_range);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -352,7 +350,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
     checkCudaErrors(cudaMalloc((void**)&d_int_fct_short_range_herm, n_grid1 * n_ao * n_ao * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    int_short_range_herm(nxBlocks, blockxSize, n_grid1, n_ao, d_wr1, d_aos_data1, d_int_fct_short_range_herm);
+    int_short_range_herm(n_grid1, n_ao, d_wr1, d_aos_data1, d_int_fct_short_range_herm);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -387,7 +385,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
     checkCudaErrors(cudaMalloc((void**)&d_int_fct_short_range_nonherm, 3*n_grid1*n_ao*n_ao*sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    int_short_range_nonherm(nxBlocks, blockxSize, n_grid1, n_ao, d_wr1, d_aos_data1, d_int_fct_short_range_nonherm);
+    int_short_range_nonherm(n_grid1, n_ao, d_wr1, d_aos_data1, d_int_fct_short_range_nonherm);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -438,7 +436,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_3, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_3_send, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_4, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);

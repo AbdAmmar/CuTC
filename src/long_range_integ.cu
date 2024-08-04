@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 
 __global__ void int_long_range_kernel(int n_grid2, int n_ao, double *wr2, double* aos_data2, double *int_fct_long_range) {
 
@@ -47,9 +48,15 @@ __global__ void int_long_range_kernel(int n_grid2, int n_ao, double *wr2, double
 
 
 
-extern "C" void int_long_range(int nBlocks, int blockSize,
-                               int n_grid2, int n_ao, double *wr2, double* aos_data2,
+extern "C" void int_long_range(int n_grid2, int n_ao, double *wr2, double* aos_data2,
                                double *int_fct_long_range) {
+
+    int nBlocks, blockSize;
+
+    blockSize = 32;
+    nBlocks = (n_grid2 + blockSize - 1) / blockSize;
+
+    printf("lunching int_long_range_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
 
