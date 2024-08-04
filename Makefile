@@ -25,8 +25,8 @@ KERNEL_OBJ = $(KERNEL_SRC:$(SRC_DIR)/%.cu=$(BUILD_DIR)/%.o)
 C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int_2e_ao.c
 C_OBJ = $(BUILD_DIR)/tc_int_c.o $(BUILD_DIR)/deb_int_2e_ao.o
 
-F_SRC = $(SRC_DIR)/gpu_module.f90
-F_OBJ = $(BUILD_DIR)/gpu_module.o
+F_SRC = $(SRC_DIR)/cutc_module.f90
+F_OBJ = $(BUILD_DIR)/cutc_module.o
 
 MAIN_SRC = $(SRC_DIR)/tc_int_f.f90
 MAIN_OBJ = $(BUILD_DIR)/tc_int_f.o
