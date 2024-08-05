@@ -29,7 +29,8 @@ __device__ double powd_int(double a, int b) {
 
 
 __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
-                                 int n_grid1, int n_grid2, int n_nuc, int size_bh,
+                                 int jj0, int n_grid2_eff, int n_grid2_tot,
+                                 int n_nuc, int size_bh,
                                  double *r1, double *r2, double *rn, 
                                  double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                                  double *grad1_u12) {
@@ -87,7 +88,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
     i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
     i_grid2_s = blockIdx.y * blockDim.y + threadIdx.y;
 
-    if((i_grid1 < n_grid1_eff) && (i_grid2_s < n_grid2)) {
+    if((i_grid1 < n_grid1_eff) && (i_grid2_s < n_grid2_eff)) {
 
         for(i_nuc = 0; i_nuc < n_nuc; i_nuc++) {
 
@@ -109,7 +110,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
     __syncthreads();
 
 
-    ii_12 = n_grid1_tot * n_grid2;
+    ii_12 = n_grid1_tot * n_grid2_tot;
 
     while(i_grid1 < n_grid1_eff) {
 
@@ -118,10 +119,10 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
         r1_y = r1[ii + 1];
         r1_z = r1[ii + 2];
 
-        ii_grid1 = i_grid1 * n_grid2;
+        ii_grid1 = i_grid1 * n_grid2_tot;
 
         i_grid2 = i_grid2_s;
-        while(i_grid2 < n_grid2) {
+        while(i_grid2 < n_grid2_eff) {
 
             ii_grid2 = ii_grid1 + i_grid2;
 
@@ -129,7 +130,7 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
             grad1_u12[ii_grid2 +   ii_12] = 0.0;
             grad1_u12[ii_grid2 + 2*ii_12] = 0.0;
 
-            jj = 3 * i_grid2;
+            jj = 3 * (jj0 + i_grid2);
             r2_x = r2[jj    ];
             r2_y = r2[jj + 1];
             r2_z = r2[jj + 2];
@@ -266,7 +267,8 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
 extern "C" void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
                           int ii0, int n_grid1_eff, int n_grid1_tot,
-                          int n_grid1, int n_grid2, int n_nuc, int size_bh,
+                          int jj0, int n_grid2_eff, int n_grid2_tot,
+                          int n_nuc, int size_bh,
                           double *r1, double *r2, double *rn, 
                           double *c_bh, int *m_bh, int *n_bh, int *o_bh,
                           double *grad1_u12) {
@@ -292,7 +294,8 @@ extern "C" void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
     size_sh_tot = aligned_offset_rn + size_rn;
 
     tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_tot>>>(ii0, n_grid1_eff, n_grid1_tot,
-                                                         n_grid1, n_grid2, n_nuc, size_bh,
+                                                         jj0, n_grid2_eff, n_grid2_tot,
+                                                         n_nuc, size_bh,
                                                          r1, r2, rn, 
                                                          c_bh, m_bh, n_bh, o_bh,
                                                          grad1_u12);

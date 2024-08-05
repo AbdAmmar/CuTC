@@ -1,5 +1,5 @@
 
-module gpu_module
+module cutc_module
 
   use, intrinsic :: iso_c_binding
 
@@ -20,11 +20,11 @@ module gpu_module
       integer(c_int), intent(in), value :: n_ao
       integer(c_int), intent(in), value :: n_nuc
       integer(c_int), intent(in), value :: size_bh
-      real(c_double), intent(in)        :: r1(n_grid1,3)
+      real(c_double), intent(in)        :: r1(3,n_grid1)
       real(c_double), intent(in)        :: wr1(n_grid1)
-      real(c_double), intent(in)        :: r2(n_grid2,3)
+      real(c_double), intent(in)        :: r2(3,n_grid2)
       real(c_double), intent(in)        :: wr2(n_grid2)
-      real(c_double), intent(in)        :: rn(n_nuc,3)
+      real(c_double), intent(in)        :: rn(3,n_nuc)
       real(c_double), intent(in)        :: aos_data1(n_grid1,n_ao,4)
       real(c_double), intent(in)        :: aos_data2(n_grid2,n_ao,4)
       real(c_double), intent(in)        :: c_bh(size_bh,n_nuc)
@@ -36,26 +36,8 @@ module gpu_module
 
     end subroutine tc_int_c
 
-    ! ---
-
-    subroutine deb_int_long_range(nBlocks, blockSize,            &
-                                  n_grid2, n_ao, wr2, aos_data2, &        
-                                  int_fct_long_range) bind(C, name = "deb_int_long_range")
-
-      import c_int, c_double
-      integer(c_int), intent(in), value :: nBlocks, blockSize
-      integer(c_int), intent(in), value :: n_grid2
-      integer(c_int), intent(in), value :: n_ao
-      real(c_double), intent(in)        :: wr2(n_grid2)
-      real(c_double), intent(in)        :: aos_data2(n_grid2,n_ao,4)
-      real(c_double), intent(out)       :: int_fct_long_range(n_grid2,n_ao,n_ao)
-
-    end subroutine deb_int_long_range
-
-    ! ---
-
   end interface
 
-end module gpu_module
+end module cutc_module
 
 

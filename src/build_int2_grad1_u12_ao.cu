@@ -48,7 +48,8 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
     checkCudaErrors(cudaMalloc((void**)&int_fct_long_range, n_grid2 * n_ao * n_ao * sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
 
-    int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
+    int_long_range_kernel<<<nBlocks, blockSize>>>(0, n_grid2, n_grid2,
+                                                  n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
@@ -83,9 +84,11 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
     for (i_pass = 0; i_pass < n_pass; i_pass++) {
 
         ii = i_pass * n_grid1_pass;
-  
+
+        // TODO
         tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
-                                                             n_grid1, n_grid2, n_nuc, size_bh,
+                                                             0, n_grid2, n_grid2,
+                                                             n_nuc, size_bh,
                                                              r1, r2, rn,
                                                              c_bh, m_bh, n_bh, o_bh,
                                                              grad1_u12);
@@ -111,9 +114,11 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
     if(n_grid1_rest > 0) {
 
         ii = n_pass * n_grid1_pass;
-     
+
+        // TODO
         tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
-                                                             n_grid1, n_grid2, n_nuc, size_bh,
+                                                             0, n_grid2, n_grid2,
+                                                             n_nuc, size_bh,
                                                              r1, r2, rn,
                                                              c_bh, m_bh, n_bh, o_bh,
                                                              grad1_u12);
