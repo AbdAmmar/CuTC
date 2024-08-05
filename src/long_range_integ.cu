@@ -58,7 +58,7 @@ extern "C" void int_long_range(int jj0, int n_grid2_eff, int n_grid2_tot,
     blockSize = 32;
     nBlocks = (n_grid2 + blockSize - 1) / blockSize;
 
-    printf("lunching int_long_range_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    //printf("lunching int_long_range_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     int_long_range_kernel<<<nBlocks, blockSize>>>(jj0, n_grid2_eff, n_grid2_tot,
                                                   n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
