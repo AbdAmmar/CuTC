@@ -36,8 +36,9 @@ program tc_int
     allocate(aos_data1(n_grid1,n_ao,4))
     allocate(aos_data2(n_grid2,n_ao,4))
     allocate(c_bh(size_bh,n_nuc), m_bh(size_bh,n_nuc), n_bh(size_bh,n_nuc), o_bh(size_bh,n_nuc))
-    allocate(int2_grad1_u12_ao(n_ao,n_ao,n_grid1,4), int_2e_ao(n_ao,n_ao,n_ao,n_ao))
+    allocate(int2_grad1_u12_ao(n_ao,n_ao,n_grid1,3), int_2e_ao(n_ao,n_ao,n_ao,n_ao))
 
+    ! use your data here
     r1 = 0.d0
     wr1 = 0.d0
     r2 = 0.d0
