@@ -78,8 +78,8 @@ int tc_int_c(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
         printf("Error: Grid dimensions exceed device capabilities!\n");
         return -1;
     }
-    printf("Grid Size: (%u, %u, %u)\n", dimGrid.x, dimGrid.y, dimGrid.z);
-    printf("Block Size: (%u, %u, %u)\n", dimBlock.x, dimBlock.y, dimBlock.z);
+    //printf("Grid Size: (%u, %u, %u)\n", dimGrid.x, dimGrid.y, dimGrid.z);
+    //printf("Block Size: (%u, %u, %u)\n", dimBlock.x, dimBlock.y, dimBlock.z);
 
 
 
@@ -185,6 +185,7 @@ int tc_int_c(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
     // // //
 
+    printf(" Done ;)\n");
     return 0;
 }
 

@@ -56,7 +56,7 @@ extern "C" void int_short_range_herm(int n_grid1, int n_ao, double *wr1, double*
     blockSize = 32;
     nBlocks = (n_grid1 + blockSize - 1) / blockSize;
 
-    printf("lunching int_short_range_herm_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    //printf("lunching int_short_range_herm_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     int_short_range_herm_kernel<<<nBlocks, blockSize>>>(n_grid1, n_ao, wr1, aos_data1, int_fct_short_range_herm);
 

@@ -1,7 +1,8 @@
 
 #include <stdio.h>
 
-__global__ void int_long_range_kernel(int n_grid2, int n_ao, double *wr2, double* aos_data2, double *int_fct_long_range) {
+__global__ void int_long_range_kernel(int jj0, int n_grid2_eff, int n_grid2_tot,
+                                      int n_grid2, int n_ao, double *wr2, double* aos_data2, double *int_fct_long_range) {
 
 
     int i_grid2;
@@ -15,24 +16,24 @@ __global__ void int_long_range_kernel(int n_grid2, int n_ao, double *wr2, double
 
     i_grid2 = blockIdx.x * blockDim.x + threadIdx.x;
 
-    ll0 = n_ao * n_grid2;
+    ll0 = n_ao * n_grid2_tot;
 
-    while(i_grid2 < n_grid2) {
+    while(i_grid2 < n_grid2_eff) {
 
-        wr2_tmp = wr2[i_grid2];
+        wr2_tmp = wr2[jj0 + i_grid2];
 
         for(i_ao = 0; i_ao < n_ao; i_ao++) {
 
             ll1 = i_grid2 + i_ao * ll0;
 
-            ii_ao = i_grid2 + n_grid2 * i_ao;
+            ii_ao = jj0 + i_grid2 + n_grid2 * i_ao;
             ao_val_i = aos_data2[ii_ao];
 
             for(j_ao = 0; j_ao < n_ao; j_ao++) {
 
-                ll2 = ll1 + j_ao * n_grid2;
+                ll2 = ll1 + j_ao * n_grid2_tot;
 
-                jj_ao = i_grid2 + n_grid2 * j_ao;
+                jj_ao = jj0 + i_grid2 + n_grid2 * j_ao;
                 ao_val_j = aos_data2[jj_ao];
 
                 int_fct_long_range[ll2] = wr2_tmp * ao_val_i * ao_val_j;
@@ -48,7 +49,8 @@ __global__ void int_long_range_kernel(int n_grid2, int n_ao, double *wr2, double
 
 
 
-extern "C" void int_long_range(int n_grid2, int n_ao, double *wr2, double* aos_data2,
+extern "C" void int_long_range(int jj0, int n_grid2_eff, int n_grid2_tot,
+                               int n_grid2, int n_ao, double *wr2, double* aos_data2,
                                double *int_fct_long_range) {
 
     int nBlocks, blockSize;
@@ -56,9 +58,10 @@ extern "C" void int_long_range(int n_grid2, int n_ao, double *wr2, double* aos_d
     blockSize = 32;
     nBlocks = (n_grid2 + blockSize - 1) / blockSize;
 
-    printf("lunching int_long_range_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    //printf("lunching int_long_range_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    int_long_range_kernel<<<nBlocks, blockSize>>>(n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
+    int_long_range_kernel<<<nBlocks, blockSize>>>(jj0, n_grid2_eff, n_grid2_tot,
+                                                  n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
 
 }
 
