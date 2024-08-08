@@ -17,13 +17,13 @@ extern void int_long_range(int jj0, int n_grid2_eff, int n_grid2_tot,
                            double *int_fct_long_range);
 
 
-extern void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
-                      int ii0, int n_grid1_eff, int n_grid1_tot,
-                      int jj0, int n_grid2_eff, int n_grid2_tot,
-                      int n_nuc, int size_bh,
-                      double *r1, double *r2, double *rn,
-                      double *c_bh, int *m_bh, int *n_bh, int *o_bh,
-                      double *grad1_u12);
+extern void cutc_int_bh(dim3 dimGrid, dim3 dimBlock,
+                        int ii0, int n_grid1_eff, int n_grid1_tot,
+                        int jj0, int n_grid2_eff, int n_grid2_tot,
+                        int n_nuc, int size_bh,
+                        double *r1, double *r2, double *rn,
+                        double *c_bh, int *m_bh, int *n_bh, int *o_bh,
+                        double *grad1_u12);
 
 extern void int_short_range_herm(int n_grid1, int n_ao, double* wr1, double* aos_data1, 
                                  double* int_fct_short_range_herm);
@@ -251,13 +251,13 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
             tt1 += time_loc;
 
             checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-            tc_int_bh(dimGrid, dimBlock,
-                      ii, n_grid1_pass, n_grid1_pass,
-                      jj, n_grid2_pass, n_grid2_pass,
-                      n_nuc, size_bh,
-                      d_r1, d_r2, d_rn,
-                      d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                      d_grad1_u12);
+            cutc_int_bh(dimGrid, dimBlock,
+                        ii, n_grid1_pass, n_grid1_pass,
+                        jj, n_grid2_pass, n_grid2_pass,
+                        n_nuc, size_bh,
+                        d_r1, d_r2, d_rn,
+                        d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                        d_grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
             checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -302,13 +302,13 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
             tt1 += time_loc;
 
             checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-            tc_int_bh(dimGrid, dimBlock,
-                      ii, n_grid1_pass, n_grid1_pass,
-                      jj, n_grid2_rest, n_grid2_pass,
-                      n_nuc, size_bh,
-                      d_r1, d_r2, d_rn,
-                      d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                      d_grad1_u12);
+            cutc_int_bh(dimGrid, dimBlock,
+                        ii, n_grid1_pass, n_grid1_pass,
+                        jj, n_grid2_rest, n_grid2_pass,
+                        n_nuc, size_bh,
+                        d_r1, d_r2, d_rn,
+                        d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                        d_grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
             checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -357,13 +357,13 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
             tt1 += time_loc;
 
             checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-            tc_int_bh(dimGrid, dimBlock,
-                      ii, n_grid1_rest, n_grid1_pass,
-                      jj, n_grid2_pass, n_grid2_pass,
-                      n_nuc, size_bh,
-                      d_r1, d_r2, d_rn,
-                      d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                      d_grad1_u12);
+            cutc_int_bh(dimGrid, dimBlock,
+                        ii, n_grid1_rest, n_grid1_pass,
+                        jj, n_grid2_pass, n_grid2_pass,
+                        n_nuc, size_bh,
+                        d_r1, d_r2, d_rn,
+                        d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                        d_grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
             checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -406,13 +406,13 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
             tt1 += time_loc;
 
             checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-            tc_int_bh(dimGrid, dimBlock,
-                      ii, n_grid1_rest, n_grid1_pass,
-                      jj, n_grid2_rest, n_grid2_pass,
-                      n_nuc, size_bh,
-                      d_r1, d_r2, d_rn,
-                      d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                      d_grad1_u12);
+            cutc_int_bh(dimGrid, dimBlock,
+                        ii, n_grid1_rest, n_grid1_pass,
+                        jj, n_grid2_rest, n_grid2_pass,
+                        n_nuc, size_bh,
+                        d_r1, d_r2, d_rn,
+                        d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                        d_grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
             checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -578,7 +578,7 @@ int deb_int_2e_ao(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int 
 
     printf("Ellapsed time for transfer data (CPU -> GPU) = %.3f sec\n", tt0/1000.0f);
     printf("Ellapsed time for int_long_range kernel = %.3f sec\n", tt1/1000.0f);
-    printf("Ellapsed time for tc_int_bh kernel = %.3f sec\n", tt2/1000.0f);
+    printf("Ellapsed time for cutc_int_bh kernel = %.3f sec\n", tt2/1000.0f);
     printf("Ellapsed time for cublas DGEMM of integ over r2 = %.3f sec\n", tt3/1000.0f);
     printf("Ellapsed time for int_short_range_herm kernel = %.3f sec\n", tt4/1000.0f);
     printf("Ellapsed time for cublas DGEMM of Hermitian part of 2e-integ = %.3f sec\n", tt5/1000.0f);

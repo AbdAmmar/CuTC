@@ -28,12 +28,12 @@ __device__ double powd_int(double a, int b) {
 }
 
 
-__global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
-                                 int jj0, int n_grid2_eff, int n_grid2_tot,
-                                 int n_nuc, int size_bh,
-                                 double *r1, double *r2, double *rn, 
-                                 double *c_bh, int *m_bh, int *n_bh, int *o_bh,
-                                 double *grad1_u12) {
+__global__ void cutc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
+                                   int jj0, int n_grid2_eff, int n_grid2_tot,
+                                   int n_nuc, int size_bh,
+                                   double *r1, double *r2, double *rn, 
+                                   double *c_bh, int *m_bh, int *n_bh, int *o_bh,
+                                   double *grad1_u12) {
 
     /*
         grad1_u12[1] =      [grad1 u(r1,r2)]_x1
@@ -265,13 +265,13 @@ __global__ void tc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
 
 
 
-extern "C" void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
-                          int ii0, int n_grid1_eff, int n_grid1_tot,
-                          int jj0, int n_grid2_eff, int n_grid2_tot,
-                          int n_nuc, int size_bh,
-                          double *r1, double *r2, double *rn, 
-                          double *c_bh, int *m_bh, int *n_bh, int *o_bh,
-                          double *grad1_u12) {
+extern "C" void cutc_int_bh(dim3 dimGrid, dim3 dimBlock,
+                            int ii0, int n_grid1_eff, int n_grid1_tot,
+                            int jj0, int n_grid2_eff, int n_grid2_tot,
+                            int n_nuc, int size_bh,
+                            double *r1, double *r2, double *rn, 
+                            double *c_bh, int *m_bh, int *n_bh, int *o_bh,
+                            double *grad1_u12) {
 
     size_t size_m;
     size_t size_c;
@@ -293,12 +293,12 @@ extern "C" void tc_int_bh(dim3 dimGrid, dim3 dimBlock,
 
     size_sh_tot = aligned_offset_rn + size_rn;
 
-    tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_tot>>>(ii0, n_grid1_eff, n_grid1_tot,
-                                                         jj0, n_grid2_eff, n_grid2_tot,
-                                                         n_nuc, size_bh,
-                                                         r1, r2, rn, 
-                                                         c_bh, m_bh, n_bh, o_bh,
-                                                         grad1_u12);
+    cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_tot>>>(ii0, n_grid1_eff, n_grid1_tot,
+                                                           jj0, n_grid2_eff, n_grid2_tot,
+                                                           n_nuc, size_bh,
+                                                           r1, r2, rn, 
+                                                           c_bh, m_bh, n_bh, o_bh,
+                                                           grad1_u12);
 
 }
 

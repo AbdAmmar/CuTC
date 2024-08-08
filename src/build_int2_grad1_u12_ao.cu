@@ -113,12 +113,12 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
-            tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
-                                                                 jj, n_grid2_pass, n_grid2_pass,
-                                                                 n_nuc, size_bh,
-                                                                 r1, r2, rn,
-                                                                 c_bh, m_bh, n_bh, o_bh,
-                                                                 grad1_u12);
+            cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
+                                                                   jj, n_grid2_pass, n_grid2_pass,
+                                                                   n_nuc, size_bh,
+                                                                   r1, r2, rn,
+                                                                   c_bh, m_bh, n_bh, o_bh,
+                                                                   grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
@@ -148,12 +148,12 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
-            tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
-                                                                 jj, n_grid2_rest, n_grid2_pass,
-                                                                 n_nuc, size_bh,
-                                                                 r1, r2, rn,
-                                                                 c_bh, m_bh, n_bh, o_bh,
-                                                                 grad1_u12);
+            cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
+                                                                   jj, n_grid2_rest, n_grid2_pass,
+                                                                   n_nuc, size_bh,
+                                                                   r1, r2, rn,
+                                                                   c_bh, m_bh, n_bh, o_bh,
+                                                                   grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
@@ -189,12 +189,12 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
-            tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
-                                                                 jj, n_grid2_pass, n_grid2_pass,
-                                                                 n_nuc, size_bh,
-                                                                 r1, r2, rn,
-                                                                 c_bh, m_bh, n_bh, o_bh,
-                                                                 grad1_u12);
+            cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
+                                                                   jj, n_grid2_pass, n_grid2_pass,
+                                                                   n_nuc, size_bh,
+                                                                   r1, r2, rn,
+                                                                   c_bh, m_bh, n_bh, o_bh,
+                                                                   grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
@@ -222,12 +222,12 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
-            tc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
-                                                                 jj, n_grid2_rest, n_grid2_pass,
-                                                                 n_nuc, size_bh,
-                                                                 r1, r2, rn,
-                                                                 c_bh, m_bh, n_bh, o_bh,
-                                                                 grad1_u12);
+            cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
+                                                                   jj, n_grid2_rest, n_grid2_pass,
+                                                                   n_nuc, size_bh,
+                                                                   r1, r2, rn,
+                                                                   c_bh, m_bh, n_bh, o_bh,
+                                                                   grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 

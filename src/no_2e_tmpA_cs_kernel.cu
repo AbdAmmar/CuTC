@@ -45,9 +45,9 @@ __global__ void no_2e_tmpA_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
                 iix = ix + ie * n2;
 
-                tmpA[ix] += wr1_tmp * mol_tmp * int2_grad1_u12[iix              ];
-                tmpA[iy] += wr1_tmp * mol_tmp * int2_grad1_u12[iix +     n_grid1];
-                tmpA[iz] += wr1_tmp * mol_tmp * int2_grad1_u12[iix + 2 * n_grid1];
+                tmpA[ix] += wr1_tmp * mol_tmp * int2_grad1_u12[iix            ];
+                tmpA[iy] += wr1_tmp * mol_tmp * int2_grad1_u12[iix +   n_grid1];
+                tmpA[iz] += wr1_tmp * mol_tmp * int2_grad1_u12[iix + 2*n_grid1];
 
             }
         }

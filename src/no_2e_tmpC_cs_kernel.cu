@@ -52,6 +52,7 @@ __global__ void no_2e_tmpC_cs_kernel(int n_grid1, int n_mo, int ne_b,
             Az = tmpA[i_grid1 + p_mo * n1 + 2*n_grid1];
 
             ix = i_grid1 + p_mo * m1;
+
             jx = i_grid1 + p_mo * n1;
 
             for(s_mo = 0; s_mo < n_mo; s_mo++) {

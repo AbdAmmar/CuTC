@@ -27,13 +27,13 @@ __global__ void no_2e_tmpJ_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
         wr1_tmp = wr1[i_grid1];
 
-        ii_grid1 = i_grid1 + ie * nn;
-
         for(ie = 0; ie < ne_b; ie++) {
 
-            tmpJ[i_grid1            ] += wr1_tmp * int2_grad1_u12[ii_grid1              ];
-            tmpJ[i_grid1 +   n_grid1] += wr1_tmp * int2_grad1_u12[ii_grid1 +     n_grid1];
-            tmpJ[i_grid1 + 2*n_grid1] += wr1_tmp * int2_grad1_u12[ii_grid1 + 2 * n_grid1];
+            ii_grid1 = i_grid1 + ie * nn;
+
+            tmpJ[i_grid1            ] += wr1_tmp * int2_grad1_u12[ii_grid1            ];
+            tmpJ[i_grid1 +   n_grid1] += wr1_tmp * int2_grad1_u12[ii_grid1 +   n_grid1];
+            tmpJ[i_grid1 + 2*n_grid1] += wr1_tmp * int2_grad1_u12[ii_grid1 + 2*n_grid1];
 
         }
 

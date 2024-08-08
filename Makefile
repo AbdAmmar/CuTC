@@ -23,19 +23,19 @@ $(shell mkdir -p $(BLD_DIR))
 CU_SRC = $(wildcard $(SRC_DIR)/*.cu)
 CU_OBJ = $(CU_SRC:$(SRC_DIR)/%.cu=$(BLD_DIR)/%.o)
 
-C_SRC = $(SRC_DIR)/tc_int_c.c $(SRC_DIR)/deb_int_2e_ao.c $(SRC_DIR)/tc_no.c
-C_OBJ = $(BLD_DIR)/tc_int_c.o $(BLD_DIR)/deb_int_2e_ao.o $(BLD_DIR)/tc_no.o
+C_SRC = $(SRC_DIR)/cutc_int_c.c $(SRC_DIR)/deb_int_2e_ao.c $(SRC_DIR)/cutc_no_2e.c $(SRC_DIR)/deb_no.c
+C_OBJ = $(BLD_DIR)/cutc_int_c.o $(BLD_DIR)/deb_int_2e_ao.o $(BLD_DIR)/cutc_no_2e.o $(BLD_DIR)/deb_no.o
 
 
 F_SRC = $(SRC_DIR)/cutc_module.f90
 F_OBJ = $(BLD_DIR)/cutc_module.o
 
-MAIN_SRC = $(SRC_DIR)/tc_int_f.f90
-MAIN_OBJ = $(BLD_DIR)/tc_int_f.o
+MAIN_SRC = $(SRC_DIR)/cutc_int_f.f90
+MAIN_OBJ = $(BLD_DIR)/cutc_int_f.o
 
-OUTPUT_LIB = tc_int_cu
+OUTPUT_LIB = cutcint
 
-TARGET = $(BIN_DIR)/tc_int
+TARGET = $(BIN_DIR)/cutc_int
 
 
 
