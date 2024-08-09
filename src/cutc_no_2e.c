@@ -41,7 +41,7 @@ extern void no_2e_tmpD_cs(int n_grid1, int n_mo,
 
 extern void trans_inplace(double * data, int size);
 
-extern void trans_pqst_psqt_copy(int size, double * data_old, double * data_new);
+extern void trans_pqst_psqt_inplace(int size, double * data);
 
 
 
@@ -81,7 +81,6 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     double * d_tmpB;
     double * d_tmpC;
     double * d_tmpD;
-    double * d_tmpE;
 
     float time_loc;
     float ttO, ttJ;
@@ -116,7 +115,6 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     sizeB = 3 * n_grid1 * n_mo * sizeof(double);
     sizeC = 4 * n_grid1 * n_mo2 * sizeof(double);
     sizeD = 4 * n_grid1 * n_mo2 * sizeof(double);
-    sizeE = n_mo2 * n_mo2 * sizeof(double);
 
     size_2e = n_mo2 * n_mo2 * sizeof(double);
 
@@ -132,7 +130,6 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaMalloc((void**)&d_tmpB, sizeB), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpC, sizeC), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpD, sizeD), "cudaMalloc", __FILE__, __LINE__);
-    checkCudaErrors(cudaMalloc((void**)&d_tmpE, sizeE), "cudaMalloc", __FILE__, __LINE__);
 
     checkCudaErrors(cudaMalloc((void**)&d_no_2e, size_2e), "cudaMalloc", __FILE__, __LINE__);
 
@@ -233,7 +230,7 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
                                   &d_tmpC[0], 4*n_grid1,
                                   &d_tmpD[0], 4*n_grid1,
                                   &beta,
-                                  &d_tmpE[0], n_mo2), "cublasDgemm", __FILE__, __LINE__);
+                                  &d_no_2e[0], n_mo2), "cublasDgemm", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
@@ -242,7 +239,7 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
     // tmpE <-- tmpE + tmpE.T
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    trans_inplace(d_tmpE, n_mo2);
+    trans_inplace(d_no_2e, n_mo2);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
@@ -256,7 +253,7 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    trans_pqst_psqt_copy(n_mo, d_tmpE, d_no_2e);
+    trans_pqst_psqt_inplace(n_mo, d_no_2e);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);

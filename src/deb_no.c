@@ -43,6 +43,8 @@ extern void trans_inplace(double * data, int size);
 
 extern void trans_pqst_psqt_copy(int size, double * data_old, double * data_new);
 
+extern void trans_pqst_psqt_inplace(int size, double * data);
+
 
 
 
@@ -206,6 +208,7 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     // tmpD
+    // avoid construction of tmpD
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_2e_tmpD_cs(n_grid1, n_mo,
                   d_wr1, d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,

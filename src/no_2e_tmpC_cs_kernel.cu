@@ -16,6 +16,8 @@ __global__ void no_2e_tmpC_cs_kernel(int n_grid1, int n_mo, int ne_b,
     int jx, jjx;
     int kx, kkx;
 
+    int iA, iB;
+
     int n1, n2;
     int m1, m2;
 
@@ -47,9 +49,11 @@ __global__ void no_2e_tmpC_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
             mol_tmp = mos_l_in_r[i_grid1 + p_mo*n_grid1];
 
-            Ax = tmpA[i_grid1 + p_mo * n1            ];
-            Ay = tmpA[i_grid1 + p_mo * n1 +   n_grid1];
-            Az = tmpA[i_grid1 + p_mo * n1 + 2*n_grid1];
+            iA = i_grid1 + p_mo * n1;
+
+            Ax = tmpA[iA            ];
+            Ay = tmpA[iA +   n_grid1];
+            Az = tmpA[iA + 2*n_grid1];
 
             ix = i_grid1 + p_mo * m1;
 
@@ -63,9 +67,10 @@ __global__ void no_2e_tmpC_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
                 mor_tmp = mos_r_in_r[i_grid1 + s_mo*n_grid1];
 
-                Bx = tmpB[i_grid1 + s_mo * n1            ];
-                By = tmpB[i_grid1 + s_mo * n1 +   n_grid1];
-                Bz = tmpB[i_grid1 + s_mo * n1 + 2*n_grid1];
+                iB = i_grid1 + s_mo * n1;
+                Bx = tmpB[iB            ];
+                By = tmpB[iB +   n_grid1];
+                Bz = tmpB[iB + 2*n_grid1];
 
                 tmpC[iix            ] = mor_tmp * Ax + mol_tmp * Bx - O * int2_grad1_u12[jjx            ] - 2.0 * mol_tmp * mor_tmp * Jx;
                 tmpC[iix +   n_grid1] = mor_tmp * Ay + mol_tmp * By - O * int2_grad1_u12[jjx +   n_grid1] - 2.0 * mol_tmp * mor_tmp * Jy;
