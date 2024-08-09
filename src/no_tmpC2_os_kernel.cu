@@ -1,9 +1,9 @@
 
 #include <stdio.h>
 
-__global__ void no_2e_tmpC2_cs_kernel(int n_grid1, int n_mo, int ne_b, 
-                                      double * int2_grad1_u12,
-                                      double * tmpC2) {
+__global__ void no_tmpC2_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
+                                   double * int2_grad1_u12,
+                                   double * tmpC2) {
 
 
     int i_grid1;
@@ -54,6 +54,18 @@ __global__ void no_2e_tmpC2_cs_kernel(int n_grid1, int n_mo, int ne_b,
                     tmpC2[iix] += int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
 
                 } // ie
+
+                for(ie = ne_b; ie < ne_a; ie++) {
+
+                    jjx = jx + ie * n2;
+
+                    kkx = kx + ie * n1;
+
+                    tmpC2[iix] += 0.5 * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ];
+                    tmpC2[iix] += 0.5 * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1];
+                    tmpC2[iix] += 0.5 * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
+
+                } // ie
     
             } // s_mo
 
@@ -67,20 +79,20 @@ __global__ void no_2e_tmpC2_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
 
 
-extern "C" void no_2e_tmpC2_cs(int n_grid1, int n_mo, int ne_b,
-                               double * int2_grad1_u12,
-                               double * tmpC2) {
+extern "C" void no_tmpC2_os(int n_grid1, int n_mo, int ne_b, int ne_a,
+                            double * int2_grad1_u12,
+                            double * tmpC2) {
 
     int nBlocks, blockSize;
 
     blockSize = 32;
     nBlocks = (n_grid1 + blockSize - 1) / blockSize;
 
-    printf("lunching no_2e_tmpC_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    printf("lunching no_tmpC_os_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    no_2e_tmpC2_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
-                                                  int2_grad1_u12,
-                                                  tmpC2);
+    no_tmpC2_os_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b, ne_a,
+                                               int2_grad1_u12,
+                                               tmpC2);
 
 }
 

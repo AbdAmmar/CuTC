@@ -62,13 +62,13 @@ extern void no_2e_tmpC1(int n_grid1, int n_mo,
                         double * tmpC1);
 
 
-extern void no_2e_tmpC2_cs(int n_grid1, int n_mo, int ne_b,
-                           double * int2_grad1_u12,
-                           double * tmpC2);
+extern void no_tmpC2_cs(int n_grid1, int n_mo, int ne_b,
+                        double * int2_grad1_u12,
+                        double * tmpC2);
 
-extern void no_2e_tmpC2_os(int n_grid1, int n_mo, int ne_b, int ne_a,
-                           double * int2_grad1_u12,
-                           double * tmpC2);
+extern void no_tmpC2_os(int n_grid1, int n_mo, int ne_b, int ne_a,
+                        double * int2_grad1_u12,
+                        double * tmpC2);
 
 extern void no_2e_tmpD(int n_grid1, int n_mo,
                        double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
@@ -302,9 +302,7 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
                     d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
                     d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
                     d_tmpC1);
-        no_2e_tmpC2_cs(n_grid1, n_mo, ne_b,
-                       d_int2_grad1_u12,
-                       d_tmpC2);
+        no_tmpC2_cs(n_grid1, n_mo, ne_b, d_int2_grad1_u12, d_tmpC2);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
         checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
         checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -321,9 +319,7 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
                     d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
                     d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
                     d_tmpC1);
-        no_2e_tmpC2_os(n_grid1, n_mo, ne_b, ne_a,
-                       d_int2_grad1_u12,
-                       d_tmpC2);
+        no_tmpC2_os(n_grid1, n_mo, ne_b, ne_a, d_int2_grad1_u12, d_tmpC2);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
         checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
         checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);

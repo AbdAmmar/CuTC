@@ -23,8 +23,8 @@ $(shell mkdir -p $(BLD_DIR))
 CU_SRC = $(wildcard $(SRC_DIR)/*.cu)
 CU_OBJ = $(CU_SRC:$(SRC_DIR)/%.cu=$(BLD_DIR)/%.o)
 
-C_SRC = $(SRC_DIR)/cutc_int_c.c $(SRC_DIR)/deb_int_2e_ao.c $(SRC_DIR)/cutc_no_2e.c $(SRC_DIR)/deb_no_2e.c
-C_OBJ = $(BLD_DIR)/cutc_int_c.o $(BLD_DIR)/deb_int_2e_ao.o $(BLD_DIR)/cutc_no_2e.o $(BLD_DIR)/deb_no_2e.o
+C_SRC = $(SRC_DIR)/cutc_int_c.c $(SRC_DIR)/deb_int_2e_ao.c $(SRC_DIR)/cutc_no_2e.c $(SRC_DIR)/deb_no_2e.c $(SRC_DIR)/cutc_no_1e.c
+C_OBJ = $(BLD_DIR)/cutc_int_c.o $(BLD_DIR)/deb_int_2e_ao.o $(BLD_DIR)/cutc_no_2e.o $(BLD_DIR)/deb_no_2e.o $(BLD_DIR)/cutc_no_1e.o
 
 
 F_SRC = $(SRC_DIR)/cutc_module.f90
