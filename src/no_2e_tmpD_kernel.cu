@@ -1,9 +1,9 @@
 
 #include <stdio.h>
 
-__global__ void no_2e_tmpD_cs_kernel(int n_grid1, int n_mo,
-                                     double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
-                                     double * tmpD) {
+__global__ void no_2e_tmpD_kernel(int n_grid1, int n_mo,
+                                  double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                                  double * tmpD) {
 
 
     int i_grid1;
@@ -65,20 +65,20 @@ __global__ void no_2e_tmpD_cs_kernel(int n_grid1, int n_mo,
 
 
 
-extern "C" void no_2e_tmpD_cs(int n_grid1, int n_mo,
-                              double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
-                              double * tmpD) {
+extern "C" void no_2e_tmpD(int n_grid1, int n_mo,
+                           double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                           double * tmpD) {
 
     int nBlocks, blockSize;
 
     blockSize = 32;
     nBlocks = (n_grid1 + blockSize - 1) / blockSize;
 
-    printf("lunching no_2e_tmpD_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    printf("lunching no_2e_tmpD_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    no_2e_tmpD_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo,
-                                                 wr1, mos_l_in_r, mos_r_in_r, int2_grad1_u12,
-                                                 tmpD);
+    no_2e_tmpD_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo,
+                                              wr1, mos_l_in_r, mos_r_in_r, int2_grad1_u12,
+                                              tmpD);
 
 }
 

@@ -35,25 +35,38 @@ extern void no_2e_tmpC_cs(int n_grid1, int n_mo, int ne_b,
                           double * tmpJ, double * tmpO, double * tmpA, double * tmpB,
                           double * tmpC);
 
-extern void no_2e_tmpD_cs(int n_grid1, int n_mo,
-                          double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
-                          double * tmpD);
+
+extern void no_2e_tmpC1(int n_grid1, int n_mo,
+                        double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                        double * tmpJ, double * tmpO, double * tmpA, double * tmpB,
+                        double * tmpC1);
+
+
+extern void no_2e_tmpC2_cs(int n_grid1, int n_mo, int ne_b,
+                           double * int2_grad1_u12,
+                           double * tmpC2);
+
+extern void no_2e_tmpD(int n_grid1, int n_mo,
+                       double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                       double * tmpD);
+
+extern void no_2e_tmpD2(int n_grid1, int n_mo,
+                        double * wr1, double * mos_l_in_r, double * mos_r_in_r,
+                        double * tmpD2);
 
 extern void trans_inplace(double * data, int size);
 
 extern void trans_pqst_psqt_copy(int size, double * data_old, double * data_new);
 
-extern void trans_pqst_psqt_inplace(int size, double * data);
 
 
 
 
 
-
-int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
-              double * h_wr1, double * h_mos_l_in_r, double * h_mos_r_in_r, double * h_int2_grad1_u12, 
-              double * h_tmpO, double * h_tmpJ, double * h_tmpA, double * h_tmpB, double * h_tmpC, double * h_tmpD, double * h_tmpE,
-              double * h_no_2e) {
+int deb_no_2e_cs(int n_grid1, int n_mo, int ne_a, int ne_b,
+                 double * h_wr1, double * h_mos_l_in_r, double * h_mos_r_in_r, double * h_int2_grad1_u12, 
+                 double * h_tmpO, double * h_tmpJ, double * h_tmpA, double * h_tmpB, double * h_tmpC, double * h_tmpD, double * h_tmpE,
+                 double * h_no_2e) {
 
 
     int n_mo2;
@@ -64,7 +77,11 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
     size_t sizeO, sizeJ;
     size_t sizeA, sizeB;
-    size_t sizeC, sizeD;
+    size_t sizeD;
+    size_t sizeD2;
+    size_t sizeC;
+    size_t sizeC1;
+    size_t sizeC2;
     size_t sizeE;
     size_t size_2e;
 
@@ -77,8 +94,11 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     double * d_tmpJ;
     double * d_tmpA;
     double * d_tmpB;
+    double * d_tmpC1;
+    double * d_tmpC2;
     double * d_tmpC;
     double * d_tmpD;
+    double * d_tmpD2;
     double * d_tmpE;
     double * d_no_2e;
 
@@ -114,7 +134,10 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     sizeA = 3 * n_grid1 * n_mo * sizeof(double);
     sizeB = 3 * n_grid1 * n_mo * sizeof(double);
     sizeC = 4 * n_grid1 * n_mo2 * sizeof(double);
+    sizeC1 = 3 * n_grid1 * n_mo2 * sizeof(double);
+    sizeC2 = n_grid1 * n_mo2 * sizeof(double);
     sizeD = 4 * n_grid1 * n_mo2 * sizeof(double);
+    sizeD2 = n_grid1 * n_mo2 * sizeof(double);
     sizeE = n_mo2 * n_mo2 * sizeof(double);
     size_2e = n_mo2 * n_mo2 * sizeof(double);
 
@@ -129,8 +152,11 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaMalloc((void**)&d_tmpJ, sizeJ), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpA, sizeA), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpB, sizeB), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_tmpC1, sizeC1), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_tmpC2, sizeC2), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpC, sizeC), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpD, sizeD), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_tmpD2, sizeD2), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpE, sizeE), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_no_2e, size_2e), "cudaMalloc", __FILE__, __LINE__);
 
@@ -193,11 +219,18 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     // tmpC
-    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_2e_tmpC_cs(n_grid1, n_mo, ne_b,
                   d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
                   d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
                   d_tmpC);
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    no_2e_tmpC1(n_grid1, n_mo,
+                d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
+                d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
+                d_tmpC1);
+    no_2e_tmpC2_cs(n_grid1, n_mo, ne_b,
+                   d_int2_grad1_u12,
+                   d_tmpC2);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -208,11 +241,13 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     // tmpD
-    // avoid construction of tmpD
+    no_2e_tmpD(n_grid1, n_mo,
+               d_wr1, d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
+               d_tmpD);
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_2e_tmpD_cs(n_grid1, n_mo,
-                  d_wr1, d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
-                  d_tmpD);
+    no_2e_tmpD2(n_grid1, n_mo,
+                d_wr1, d_mos_l_in_r, d_mos_r_in_r,
+                d_tmpD2);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -225,12 +260,29 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     alpha = 0.5;
     beta = 0.0;
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    //checkCublasErrors(cublasDgemm(myhandle,
+    //                              CUBLAS_OP_T, CUBLAS_OP_N,
+    //                              n_mo2, n_mo2, 4*n_grid1,
+    //                              &alpha,
+    //                              &d_tmpC[0], 4*n_grid1,
+    //                              &d_tmpD[0], 4*n_grid1,
+    //                              &beta,
+    //                              &d_tmpE[0], n_mo2), "cublasDgemm", __FILE__, __LINE__);
     checkCublasErrors(cublasDgemm(myhandle,
                                   CUBLAS_OP_T, CUBLAS_OP_N,
-                                  n_mo2, n_mo2, 4*n_grid1,
+                                  n_mo2, n_mo2, 3*n_grid1,
                                   &alpha,
-                                  &d_tmpC[0], 4*n_grid1,
-                                  &d_tmpD[0], 4*n_grid1,
+                                  &d_tmpC1[0], 3*n_grid1,
+                                  &d_int2_grad1_u12[0], 3*n_grid1,
+                                  &beta,
+                                  &d_tmpE[0], n_mo2), "cublasDgemm", __FILE__, __LINE__);
+    beta = 1.0;
+    checkCublasErrors(cublasDgemm(myhandle,
+                                  CUBLAS_OP_T, CUBLAS_OP_N,
+                                  n_mo2, n_mo2, n_grid1,
+                                  &alpha,
+                                  &d_tmpC2[0], n_grid1,
+                                  &d_tmpD2[0], n_grid1,
                                   &beta,
                                   &d_tmpE[0], n_mo2), "cublasDgemm", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
@@ -278,7 +330,10 @@ int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaFree(d_tmpA), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpB), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpC), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_tmpC1), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_tmpC2), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpD), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_tmpD2), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpE), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_no_2e), "cudaFree", __FILE__, __LINE__);
 
