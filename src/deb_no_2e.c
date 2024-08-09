@@ -17,12 +17,23 @@ extern void no_2e_tmpO_cs(int n_grid1, int ne_b,
                           double * wr1, double * mos_l_in_r, double * mos_r_in_r,
                           double * tmpO);
 
+extern void no_2e_tmpO_os(int n_grid1, int ne_b, int ne_a,
+                          double * wr1, double * mos_l_in_r, double * mos_r_in_r,
+                          double * tmpO);
+
 extern void no_2e_tmpJ_cs(int n_grid1, int n_mo, int ne_b,
                           double * wr1, double * int2_grad1_u12,
                           double * tmpJ);
 
+extern void no_2e_tmpJ_os(int n_grid1, int n_mo, int ne_b, int ne_a,
+                          double * wr1, double * int2_grad1_u12,
+                          double * tmpJ);
 
 extern void no_2e_tmpA_cs(int n_grid1, int n_mo, int ne_b,
+                          double * wr1, double * mos_l_in_r, double * int2_grad1_u12,
+                          double * tmpA);
+
+extern void no_2e_tmpA_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                           double * wr1, double * mos_l_in_r, double * int2_grad1_u12,
                           double * tmpA);
 
@@ -30,7 +41,16 @@ extern void no_2e_tmpB_cs(int n_grid1, int n_mo, int ne_b,
                           double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
                           double * tmpB);
 
+extern void no_2e_tmpB_os(int n_grid1, int n_mo, int ne_b, int ne_a,
+                          double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
+                          double * tmpB);
+
 extern void no_2e_tmpC_cs(int n_grid1, int n_mo, int ne_b,
+                          double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                          double * tmpJ, double * tmpO, double * tmpA, double * tmpB,
+                          double * tmpC);
+
+extern void no_2e_tmpC_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                           double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
                           double * tmpJ, double * tmpO, double * tmpA, double * tmpB,
                           double * tmpC);
@@ -43,6 +63,10 @@ extern void no_2e_tmpC1(int n_grid1, int n_mo,
 
 
 extern void no_2e_tmpC2_cs(int n_grid1, int n_mo, int ne_b,
+                           double * int2_grad1_u12,
+                           double * tmpC2);
+
+extern void no_2e_tmpC2_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                            double * int2_grad1_u12,
                            double * tmpC2);
 
@@ -63,10 +87,10 @@ extern void trans_pqst_psqt_copy(int size, double * data_old, double * data_new)
 
 
 
-int deb_no_2e_cs(int n_grid1, int n_mo, int ne_a, int ne_b,
-                 double * h_wr1, double * h_mos_l_in_r, double * h_mos_r_in_r, double * h_int2_grad1_u12, 
-                 double * h_tmpO, double * h_tmpJ, double * h_tmpA, double * h_tmpB, double * h_tmpC, double * h_tmpD, double * h_tmpE,
-                 double * h_no_2e) {
+int deb_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
+              double * h_wr1, double * h_mos_l_in_r, double * h_mos_r_in_r, double * h_int2_grad1_u12, 
+              double * h_tmpO, double * h_tmpJ, double * h_tmpA, double * h_tmpB, double * h_tmpC, double * h_tmpD, double * h_tmpE,
+              double * h_no_2e) {
 
 
     int n_mo2;
@@ -167,78 +191,146 @@ int deb_no_2e_cs(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     // tmpO
-    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_2e_tmpO_cs(n_grid1, ne_b,
-                  d_wr1, d_mos_l_in_r, d_mos_r_in_r,
-                  d_tmpO);
-    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
-    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    ttO = time_loc;
+    if(ne_a == ne_b) {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpO_cs(n_grid1, ne_b,
+                      d_wr1, d_mos_l_in_r, d_mos_r_in_r,
+                      d_tmpO);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttO = time_loc;
+    } else {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpO_os(n_grid1, ne_b, ne_a,
+                      d_wr1, d_mos_l_in_r, d_mos_r_in_r,
+                      d_tmpO);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttO = time_loc;
+    }
 
 
     // tmpJ
-    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_2e_tmpJ_cs(n_grid1, n_mo, ne_b,
-                  d_wr1, d_int2_grad1_u12,
-                  d_tmpJ);
-    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
-    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    ttJ = time_loc;
-
+    if(ne_a == ne_b) {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpJ_cs(n_grid1, n_mo, ne_b,
+                      d_wr1, d_int2_grad1_u12,
+                      d_tmpJ);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttJ = time_loc;
+    } else {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpJ_os(n_grid1, n_mo, ne_b, ne_a,
+                      d_wr1, d_int2_grad1_u12,
+                      d_tmpJ);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttJ = time_loc;
+    }
 
     // tmpA
-    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_2e_tmpA_cs(n_grid1, n_mo, ne_b,
-                  d_wr1, d_mos_l_in_r, d_int2_grad1_u12,
-                  d_tmpA);
-    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
-    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    ttA = time_loc;
-
+    if(ne_a == ne_b) {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpA_cs(n_grid1, n_mo, ne_b,
+                      d_wr1, d_mos_l_in_r, d_int2_grad1_u12,
+                      d_tmpA);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttA = time_loc;
+    } else {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpA_os(n_grid1, n_mo, ne_b, ne_a,
+                      d_wr1, d_mos_l_in_r, d_int2_grad1_u12,
+                      d_tmpA);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttA = time_loc;
+    }
 
     // tmpB
-    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_2e_tmpB_cs(n_grid1, n_mo, ne_b,
-                  d_wr1, d_mos_r_in_r, d_int2_grad1_u12,
-                  d_tmpB);
-    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
-    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    ttB = time_loc;
-
+    if(ne_a == ne_b) {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpB_cs(n_grid1, n_mo, ne_b,
+                      d_wr1, d_mos_r_in_r, d_int2_grad1_u12,
+                      d_tmpB);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttB = time_loc;
+    } else {
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpB_os(n_grid1, n_mo, ne_b, ne_a,
+                      d_wr1, d_mos_r_in_r, d_int2_grad1_u12,
+                      d_tmpB);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttB = time_loc;
+    }
 
     // tmpC
-    no_2e_tmpC_cs(n_grid1, n_mo, ne_b,
-                  d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
-                  d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
-                  d_tmpC);
-    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_2e_tmpC1(n_grid1, n_mo,
-                d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
-                d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
-                d_tmpC1);
-    no_2e_tmpC2_cs(n_grid1, n_mo, ne_b,
-                   d_int2_grad1_u12,
-                   d_tmpC2);
-    checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
-    checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    ttC = time_loc;
-
-
+    if(ne_a == ne_b) {
+        no_2e_tmpC_cs(n_grid1, n_mo, ne_b,
+                      d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
+                      d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
+                      d_tmpC);
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpC1(n_grid1, n_mo,
+                    d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
+                    d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
+                    d_tmpC1);
+        no_2e_tmpC2_cs(n_grid1, n_mo, ne_b,
+                       d_int2_grad1_u12,
+                       d_tmpC2);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttC = time_loc;
+    } else {
+        no_2e_tmpC_os(n_grid1, n_mo, ne_b, ne_a,
+                      d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
+                      d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
+                      d_tmpC);
+        checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        no_2e_tmpC1(n_grid1, n_mo,
+                    d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12,
+                    d_tmpJ, d_tmpO, d_tmpA, d_tmpB,
+                    d_tmpC1);
+        no_2e_tmpC2_os(n_grid1, n_mo, ne_b, ne_a,
+                       d_int2_grad1_u12,
+                       d_tmpC2);
+        checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+        checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+        ttC = time_loc;
+    }
 
     // tmpD
     no_2e_tmpD(n_grid1, n_mo,

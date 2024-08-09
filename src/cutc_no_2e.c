@@ -156,7 +156,7 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaMemcpy(d_mos_r_in_r, h_mos_r_in_r, size_mos_in_r, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_int2_grad1_u12, h_int2_grad1_u12, size_int2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
 
-    if(ne_b == ne_b) {
+    if(ne_a == ne_b) {
 
         // Closed-Shell
 
