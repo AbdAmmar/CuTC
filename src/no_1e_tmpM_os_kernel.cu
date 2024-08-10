@@ -87,9 +87,9 @@ __global__ void no_1e_tmpM_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
                 mor_j = mos_r_in_r[i_grid1 + je * n_grid1];
 
-                tmpM[i_grid1            ] += mol_i * mor_j * int2_grad1_u12[iix            ];
-                tmpM[i_grid1 +   n_grid1] += mol_i * mor_j * int2_grad1_u12[iix +   n_grid1];
-                tmpM[i_grid1 + 2*n_grid1] += mol_i * mor_j * int2_grad1_u12[iix + 2*n_grid1];
+                tmpM[i_grid1            ] += 0.5 * mol_i * mor_j * int2_grad1_u12[iix            ];
+                tmpM[i_grid1 +   n_grid1] += 0.5 * mol_i * mor_j * int2_grad1_u12[iix +   n_grid1];
+                tmpM[i_grid1 + 2*n_grid1] += 0.5 * mol_i * mor_j * int2_grad1_u12[iix + 2*n_grid1];
 
             }
 
