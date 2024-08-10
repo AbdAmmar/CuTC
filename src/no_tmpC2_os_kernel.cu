@@ -27,7 +27,8 @@ __global__ void no_tmpC2_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
     while(i_grid1 < n_grid1) {
 
-        for(p_mo = 0; p_mo < n_mo; p_mo++) {
+        p_mo = blockIdx.y * blockDim.y + threadIdx.y;
+        while(p_mo < n_mo) {
 
             ix = i_grid1 + p_mo * n_grid1;
 
@@ -69,6 +70,8 @@ __global__ void no_tmpC2_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
     
             } // s_mo
 
+            p_mo += blockDim.y * gridDim.y;
+
         } // p_mo
 
         i_grid1 += blockDim.x * gridDim.x;
@@ -83,16 +86,24 @@ extern "C" void no_tmpC2_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                             double * int2_grad1_u12,
                             double * tmpC2) {
 
-    int nBlocks, blockSize;
+    int nxBlocks, blockxSize;
+    int nyBlocks, blockySize;
 
-    blockSize = 32;
-    nBlocks = (n_grid1 + blockSize - 1) / blockSize;
+    blockxSize = 32;
+    nxBlocks = (n_grid1 + blockxSize - 1) / blockxSize;
 
-    printf("lunching no_tmpC_os_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    blockySize = 32;
+    nyBlocks = (n_mo + blockySize - 1) / blockySize;
 
-    no_tmpC2_os_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b, ne_a,
-                                               int2_grad1_u12,
-                                               tmpC2);
+    dim3 dimGrid(nxBlocks, nyBlocks, 1);
+    dim3 dimBlock(blockxSize, blockySize, 1);
+
+    printf("lunching no_tmpC_os_kernel with %dx%d blocks and %dx%d threads/block\n", nxBlocks, nyBlocks, blockxSize, blockySize);
+
+    no_tmpC2_os_kernel<<<dimGrid, dimBlock>>>(n_grid1, n_mo, ne_b, ne_a,
+                                              int2_grad1_u12,
+                                              tmpC2);
+
 
 }
 
