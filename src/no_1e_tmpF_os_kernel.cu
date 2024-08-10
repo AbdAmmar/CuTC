@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 
-__global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b, 
+__global__ void no_1e_tmpF_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
                                      double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
                                      double * tmpS, double * tmpJ, double * tmpR,
                                      double * tmpF) {
@@ -12,8 +12,10 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
     int je;
     int p_mo;
 
+    int iix;
     int jx, jjx;
     int kx, kkx;
+    int lx, llx;
 
     int iR, iF;
 
@@ -21,7 +23,7 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
     int m1;
 
     double wr1_tmp;
-    double mor_tmp, mor_i;
+    double mor_tmp, mor_i, mor_j;
     double S;
     double Jx, Jy, Jz;
     double Rx, Ry, Rz;
@@ -81,6 +83,50 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
                 } // ie
 
             } // je
+
+            for(ie = ne_b; ie < ne_a; ie++) {
+
+                mor_i = mos_r_in_r[i_grid1 + ie*n_grid1];
+
+                kx = i_grid1 + ie * n1;
+                lx = i_grid1 + ie * n2;
+
+                iix = jx + ie * n1;
+
+                for(je = 0; je < ne_b; je++) {
+
+                    mor_j = mos_r_in_r[i_grid1 + je*n_grid1];
+
+                    jjx = jx + je * n1;
+                    kkx = kx + je * n2;
+                    llx = lx + je * n1;
+
+                    tmpF[iF] += 0.5 * (mor_i * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ] + mor_j * int2_grad1_u12[iix            ] * int2_grad1_u12[llx            ]);
+                    tmpF[iF] += 0.5 * (mor_i * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1] + mor_j * int2_grad1_u12[iix +   n_grid1] * int2_grad1_u12[llx +   n_grid1]);
+                    tmpF[iF] += 0.5 * (mor_i * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1] + mor_j * int2_grad1_u12[iix + 2*n_grid1] * int2_grad1_u12[llx + 2*n_grid1]);
+
+                } // ie
+
+            } // je
+
+            for(ie = ne_b; ie < ne_a; ie++) {
+
+                mor_i = mos_r_in_r[i_grid1 + ie*n_grid1];
+
+                kx = i_grid1 + ie * n1;
+
+                for(je = ne_b; je < ne_a; je++) {
+
+                    jjx = jx + je * n1;
+                    kkx = kx + je * n2;
+
+                    tmpF[iF] += 0.5 * mor_i * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ];
+                    tmpF[iF] += 0.5 * mor_i * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1];
+                    tmpF[iF] += 0.5 * mor_i * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
+
+                } // ie
+
+            } // je
     
         } // p_mo
 
@@ -92,7 +138,7 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
 
 
-extern "C" void no_1e_tmpF_cs(int n_grid1, int n_mo, int ne_b,
+extern "C" void no_1e_tmpF_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                               double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
                               double * tmpS, double * tmpJ, double * tmpR,
                               double * tmpF) {
@@ -102,9 +148,9 @@ extern "C" void no_1e_tmpF_cs(int n_grid1, int n_mo, int ne_b,
     blockSize = 32;
     nBlocks = (n_grid1 + blockSize - 1) / blockSize;
 
-    printf("lunching no_1e_tmpF_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    printf("lunching no_1e_tmpF_os_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    no_1e_tmpF_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
+    no_1e_tmpF_os_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b, ne_a,
                                                  wr1, mos_r_in_r, int2_grad1_u12,
                                                  tmpS, tmpJ, tmpR,
                                                  tmpF);

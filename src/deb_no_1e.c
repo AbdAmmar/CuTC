@@ -29,9 +29,9 @@ extern void no_1e_tmpS_cs(int n_grid1, int n_mo, int ne_b,
                           double * int2_grad1_u12, double * tmpJ,
                           double * tmpS);
 
-extern void no_1e_tmpD_cs(int n_grid1,
-                          double * wr1, double * tmpO, double * tmpJ, double * tmpM,
-                          double * tmpD);
+extern void no_1e_tmpD(int n_grid1,
+                       double * wr1, double * tmpO, double * tmpJ, double * tmpM,
+                       double * tmpD);
 
 extern void no_1e_tmpC_cs(int n_grid1, int n_mo, int ne_b,
                           double * int2_grad1_u12,
@@ -213,7 +213,7 @@ int deb_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     ttS = time_loc;
 
     checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
-    no_1e_tmpD_cs(n_grid1, d_wr1, d_tmpO, d_tmpJ, d_tmpM, d_tmpD);
+    no_1e_tmpD(n_grid1, d_wr1, d_tmpO, d_tmpJ, d_tmpM, d_tmpD);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);

@@ -1,9 +1,9 @@
 
 #include <stdio.h>
 
-__global__ void no_1e_tmpR_cs_kernel(int n_grid1, int n_mo, int ne_b, 
+__global__ void no_1e_tmpH_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
                                      double * mos_r_in_r, double * int2_grad1_u12,
-                                     double * tmpR) {
+                                     double * tmpH) {
 
 
     int i_grid1;
@@ -32,21 +32,21 @@ __global__ void no_1e_tmpR_cs_kernel(int n_grid1, int n_mo, int ne_b,
             iy = ix + n_grid1;
             iz = iy + n_grid1;
 
-            tmpR[ix] = 0.0;
-            tmpR[iy] = 0.0;
-            tmpR[iz] = 0.0;
+            tmpH[ix] = 0.0;
+            tmpH[iy] = 0.0;
+            tmpH[iz] = 0.0;
 
             jx = i_grid1 + p_mo * n2;
 
-            for(ie = 0; ie < ne_b; ie++) {
+            for(ie = ne_b; ie < ne_a; ie++) {
 
                 mor_tmp = mos_r_in_r[i_grid1 + ie * n_grid1];
 
                 jjx = jx + ie * n1;
 
-                tmpR[ix] += mor_tmp * int2_grad1_u12[jjx            ];
-                tmpR[iy] += mor_tmp * int2_grad1_u12[jjx +   n_grid1];
-                tmpR[iz] += mor_tmp * int2_grad1_u12[jjx + 2*n_grid1];
+                tmpH[ix] += 0.5 * mor_tmp * int2_grad1_u12[jjx            ];
+                tmpH[iy] += 0.5 * mor_tmp * int2_grad1_u12[jjx +   n_grid1];
+                tmpH[iz] += 0.5 * mor_tmp * int2_grad1_u12[jjx + 2*n_grid1];
 
             }
 
@@ -60,20 +60,20 @@ __global__ void no_1e_tmpR_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
 
 
-extern "C" void no_1e_tmpR_cs(int n_grid1, int n_mo, int ne_b,
+extern "C" void no_1e_tmpH_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                               double * mos_r_in_r, double * int2_grad1_u12,
-                              double * tmpR) {
+                              double * tmpH) {
 
     int nBlocks, blockSize;
 
     blockSize = 32;
     nBlocks = (n_grid1 + blockSize - 1) / blockSize;
 
-    printf("lunching no_1e_tmpR_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    printf("lunching no_1e_tmpH_os_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    no_1e_tmpR_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
+    no_1e_tmpH_os_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b, ne_a,
                                                  mos_r_in_r, int2_grad1_u12,
-                                                 tmpR);
+                                                 tmpH);
 
 }
 

@@ -21,7 +21,7 @@ __global__ void no_1e_tmpE_cs_kernel(int n_grid1, int n_mo, int ne_b,
     int m1;
 
     double wr1_tmp;
-    double mol_tmp;
+    double mol_tmp, mol_j;
     double Jx, Jy, Jz;
     double Lx, Ly, Lz;
 
@@ -60,7 +60,7 @@ __global__ void no_1e_tmpE_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
             for(je = 0; je < ne_b; je++) {
 
-                mol_tmp = mos_l_in_r[i_grid1 + je*n_grid1];
+                mol_j = mos_l_in_r[i_grid1 + je*n_grid1];
 
                 kx = i_grid1 + je * n2;
 
@@ -69,9 +69,9 @@ __global__ void no_1e_tmpE_cs_kernel(int n_grid1, int n_mo, int ne_b,
                     jjx = iL + ie * n2;
                     kkx = kx + ie * n1;
 
-                    tmpE[iE + n_grid1] += mol_tmp * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ];
-                    tmpE[iE + n_grid1] += mol_tmp * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1];
-                    tmpE[iE + n_grid1] += mol_tmp * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
+                    tmpE[iE + n_grid1] += mol_j * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ];
+                    tmpE[iE + n_grid1] += mol_j * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1];
+                    tmpE[iE + n_grid1] += mol_j * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
 
                 } // ie
 
