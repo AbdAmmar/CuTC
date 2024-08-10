@@ -33,6 +33,10 @@ extern void no_1e_tmpD_cs(int n_grid1,
                           double * wr1, double * tmpO, double * tmpJ, double * tmpM,
                           double * tmpD);
 
+extern void no_1e_tmpC_cs(int n_grid1, int n_mo, int ne_b,
+                          double * int2_grad1_u12,
+                          double * tmpC);
+
 extern void no_tmpC2_cs(int n_grid1, int n_mo, int ne_b,
                         double * int2_grad1_u12,
                         double * tmpC2);
@@ -60,11 +64,11 @@ extern void no_1e_tmpF_cs(int n_grid1, int n_mo, int ne_b,
 
 
 
-int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
-               double * h_wr1, 
-               double * h_mos_l_in_r, double * h_mos_r_in_r, 
-               double * h_int2_grad1_u12, 
-               double * h_no_1e) {
+int deb_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
+              double * h_wr1, double * h_mos_l_in_r, double * h_mos_r_in_r, double * h_int2_grad1_u12, 
+              double * h_tmpO, double * h_tmpJ, double * h_tmpM, double * h_tmpS, double * h_tmpC, double * h_tmpD,
+              double * h_tmpL, double * h_tmpR, double * h_tmpE, double * h_tmpF,
+              double * h_no_1e) {
 
 
     int n_mo2;
@@ -79,6 +83,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     size_t sizeJ;
     size_t sizeM;
     size_t sizeS;
+    size_t sizeC;
     size_t sizeD;
     size_t sizeC2;
     size_t sizeL;
@@ -99,6 +104,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     double * d_tmpM;
     double * d_tmpS;
     double * d_tmpD;
+    double * d_tmpC;
     double * d_tmpC2;
     double * d_tmpL;
     double * d_tmpR;
@@ -108,7 +114,15 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
     double alpha, beta;
 
-    printf(" Computing 1e-Elements for Normal-Ordering With CuTC\n");
+    float time_loc;
+    float ttO, ttJ, ttM, ttS, ttD, ttC2, ttDGEMV, ttL, ttR, ttE, ttF, ttDGEMM;
+
+
+    cudaEvent_t start_loc, stop_loc;
+
+    checkCudaErrors(cudaEventCreate(&start_loc), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventCreate(&stop_loc), "cudaEventCreate", __FILE__, __LINE__);
+
 
 
     cublasHandle_t myhandle;
@@ -129,6 +143,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     sizeM = 3 * n_grid1 * sizeof(double);
     sizeS = n_grid1 * sizeof(double);
     sizeD = 4 * n_grid1 * sizeof(double);
+    sizeC = 4 * n_grid1 * n_mo2 * sizeof(double);
     sizeC2 = n_grid1 * n_mo2 * sizeof(double);
     sizeL = 3 * n_grid1 * n_mo * sizeof(double);
     sizeR = 3 * n_grid1 * n_mo * sizeof(double);
@@ -148,6 +163,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaMalloc((void**)&d_tmpM, sizeM), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpS, sizeS), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpD, sizeD), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_tmpC, sizeC), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpC2, sizeC2), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpL, sizeL), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_tmpR, sizeR), "cudaMalloc", __FILE__, __LINE__);
@@ -162,29 +178,62 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpO_cs(n_grid1, ne_b, d_mos_l_in_r, d_mos_r_in_r, d_tmpO);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttO = time_loc;
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpJ_cs(n_grid1, n_mo, ne_b, d_int2_grad1_u12, d_tmpJ);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttJ = time_loc;
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpM_cs(n_grid1, n_mo, ne_b, d_mos_l_in_r, d_mos_r_in_r, d_int2_grad1_u12, d_tmpM);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttM = time_loc;
 
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpS_cs(n_grid1, n_mo, ne_b, d_int2_grad1_u12, d_tmpJ, d_tmpS);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttS = time_loc;
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpD_cs(n_grid1, d_wr1, d_tmpO, d_tmpJ, d_tmpM, d_tmpD);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttD = time_loc;
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_tmpC2_cs(n_grid1, n_mo, ne_b, d_int2_grad1_u12, d_tmpC2);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttC2 = time_loc;
+
+    no_1e_tmpC_cs(n_grid1, n_mo, ne_b, d_int2_grad1_u12, d_tmpC);
 
 
     alpha = 2.0;
     beta = 0.0;
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCublasErrors(cublasDgemv(myhandle, 
                                   CUBLAS_OP_T,
                                   3*n_grid1, n_mo2,
@@ -203,25 +252,50 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
                                   &d_tmpD[3*n_grid1], 1,
                                   &beta,
                                   &d_no_1e[0], 1), "cublasDgemv", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttDGEMV = time_loc;
 
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpL_cs(n_grid1, n_mo, ne_b, d_mos_l_in_r, d_int2_grad1_u12, d_tmpL);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttL = time_loc;
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpR_cs(n_grid1, n_mo, ne_b, d_mos_r_in_r, d_int2_grad1_u12, d_tmpR);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttR = time_loc;
 
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpE_cs(n_grid1, n_mo, ne_b, d_wr1, d_mos_l_in_r, d_int2_grad1_u12, d_tmpJ, d_tmpL, d_tmpE);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttE = time_loc;
 
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     no_1e_tmpF_cs(n_grid1, n_mo, ne_b, d_wr1, d_mos_r_in_r, d_int2_grad1_u12, d_tmpS, d_tmpJ, d_tmpR, d_tmpF);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttF = time_loc;
 
 
     alpha = 1.0;
     beta = 1.0;
+    checkCudaErrors(cudaEventRecord(start_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
     checkCublasErrors(cublasDgemm(myhandle,
                                   CUBLAS_OP_T, CUBLAS_OP_N,
                                   n_mo, n_mo, 5*n_grid1,
@@ -230,12 +304,22 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
                                   &d_tmpF[0], 5*n_grid1,
                                   &beta,
                                   &d_no_1e[0], n_mo), "cublasDgemm", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, NULL), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    ttDGEMM = time_loc;
 
 
-
-
-
-
+    checkCudaErrors(cudaMemcpy(h_tmpO, d_tmpO, sizeO, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpJ, d_tmpJ, sizeJ, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpM, d_tmpM, sizeM, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpS, d_tmpS, sizeS, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpC, d_tmpC, sizeC, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpD, d_tmpD, sizeD, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpL, d_tmpL, sizeL, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpR, d_tmpR, sizeR, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpE, d_tmpE, sizeE, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(h_tmpF, d_tmpF, sizeF, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_no_1e, d_no_1e, size_1e, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
     checkCudaErrors(cudaFree(d_wr1), "cudaFree", __FILE__, __LINE__);
@@ -250,6 +334,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaFree(d_tmpM), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpS), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpD), "cudaFree", __FILE__, __LINE__);
+    checkCudaErrors(cudaFree(d_tmpC), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpC2), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpL), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpR), "cudaFree", __FILE__, __LINE__);
@@ -257,6 +342,21 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaFree(d_tmpF), "cudaFree", __FILE__, __LINE__);
 
     checkCublasErrors(cublasDestroy(myhandle), "cublasDestroy", __FILE__, __LINE__);
+
+    printf("Ellapsed time for tmpO kernel = %.3f sec\n", ttO/1000.0f);
+    printf("Ellapsed time for tmpJ kernel = %.3f sec\n", ttJ/1000.0f);
+    printf("Ellapsed time for tmpM kernel = %.3f sec\n", ttM/1000.0f);
+    printf("Ellapsed time for tmpS kernel = %.3f sec\n", ttS/1000.0f);
+    printf("Ellapsed time for tmpD kernel = %.3f sec\n", ttD/1000.0f);
+    printf("Ellapsed time for tmpC2 kernel = %.3f sec\n", ttC2/1000.0f);
+    printf("Ellapsed time for DGEMV kernel = %.3f sec\n", ttDGEMV/1000.0f);
+    printf("Ellapsed time for tmpL kernel = %.3f sec\n", ttL/1000.0f);
+    printf("Ellapsed time for tmpR kernel = %.3f sec\n", ttR/1000.0f);
+    printf("Ellapsed time for tmpE kernel = %.3f sec\n", ttE/1000.0f);
+    printf("Ellapsed time for tmpF kernel = %.3f sec\n", ttF/1000.0f);
+    printf("Ellapsed time for DGEMM kernel = %.3f sec\n", ttDGEMM/1000.0f);
+    printf("Ellapsed time on GPU = %.3f sec\n", (ttO + ttJ + ttM + ttS + ttD + ttC2 + ttDGEMV + ttL + ttR + ttE + ttF + ttDGEMM)/1000.0f);
+
 
 
     return 0;
