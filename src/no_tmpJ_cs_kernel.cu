@@ -1,9 +1,9 @@
 
 #include <stdio.h>
 
-__global__ void no_1e_tmpJ_cs_kernel(int n_grid1, int n_mo, int ne_b, 
-                                     double * int2_grad1_u12,
-                                     double * tmpJ) {
+__global__ void no_tmpJ_cs_kernel(int n_grid1, int n_mo, int ne_b, 
+                                  double * int2_grad1_u12,
+                                  double * tmpJ) {
 
 
     int i_grid1;
@@ -41,20 +41,20 @@ __global__ void no_1e_tmpJ_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
 
 
-extern "C" void no_1e_tmpJ_cs(int n_grid1, int n_mo, int ne_b,
-                              double * int2_grad1_u12,
-                              double * tmpJ) {
+extern "C" void no_tmpJ_cs(int n_grid1, int n_mo, int ne_b,
+                           double * int2_grad1_u12,
+                           double * tmpJ) {
 
     int nBlocks, blockSize;
 
     blockSize = 32;
     nBlocks = (n_grid1 + blockSize - 1) / blockSize;
 
-    printf("lunching no_1e_tmpJ_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
+    printf("lunching no_tmpJ_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    no_1e_tmpJ_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
-                                                 int2_grad1_u12,
-                                                 tmpJ);
+    no_tmpJ_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
+                                              int2_grad1_u12,
+                                              tmpJ);
 
 }
 
