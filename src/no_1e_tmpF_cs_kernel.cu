@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b, 
-                                     double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
+                                     double * mos_r_in_r, double * int2_grad1_u12,
                                      double * tmpS, double * tmpJ, double * tmpR,
                                      double * tmpF) {
 
@@ -20,7 +20,6 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
     int n1, n2;
     int m1;
 
-    double wr1_tmp;
     double mor_tmp, mor_i;
     double S;
     double Jx, Jy, Jz;
@@ -35,8 +34,6 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
     m1 = 5 * n_grid1;
 
     while(i_grid1 < n_grid1) {
-
-        wr1_tmp = wr1[i_grid1];
 
         S = tmpS[i_grid1];
 
@@ -56,7 +53,7 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
             Rz = tmpR[iR + 2*n_grid1];
 
             tmpF[iF            ] = -2.0 * (Rx * Jx + Ry * Jy + Rz * Jz) + mor_tmp * S;
-            tmpF[iF +   n_grid1] = wr1_tmp * mor_tmp;
+            tmpF[iF +   n_grid1] = mor_tmp;
             tmpF[iF + 2*n_grid1] = Rx;
             tmpF[iF + 3*n_grid1] = Ry;
             tmpF[iF + 4*n_grid1] = Rz;
@@ -93,7 +90,7 @@ __global__ void no_1e_tmpF_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
 
 extern "C" void no_1e_tmpF_cs(int n_grid1, int n_mo, int ne_b,
-                              double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
+                              double * mos_r_in_r, double * int2_grad1_u12,
                               double * tmpS, double * tmpJ, double * tmpR,
                               double * tmpF) {
 
@@ -105,7 +102,7 @@ extern "C" void no_1e_tmpF_cs(int n_grid1, int n_mo, int ne_b,
     printf("lunching no_1e_tmpF_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     no_1e_tmpF_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
-                                                 wr1, mos_r_in_r, int2_grad1_u12,
+                                                 mos_r_in_r, int2_grad1_u12,
                                                  tmpS, tmpJ, tmpR,
                                                  tmpF);
 

@@ -58,11 +58,11 @@ extern void no_tmpC2_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                         double * tmpC2);
 
 extern void no_1e_tmpL_cs(int n_grid1, int n_mo, int ne_b,
-                          double * mos_l_in_r, double * int2_grad1_u12,
+                          double * wr1, double * mos_l_in_r, double * int2_grad1_u12,
                           double * tmpL);
 
 extern void no_1e_tmpL_os(int n_grid1, int n_mo, int ne_b, int ne_a,
-                          double * mos_l_in_r, double * int2_grad1_u12,
+                          double * wr1, double * mos_l_in_r, double * int2_grad1_u12,
                           double * tmpL);
 
 extern void no_1e_tmpR_cs(int n_grid1, int n_mo, int ne_b,
@@ -84,12 +84,12 @@ extern void no_1e_tmpE_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                           double * tmpE);
 
 extern void no_1e_tmpF_cs(int n_grid1, int n_mo, int ne_b,
-                          double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
+                          double * mos_r_in_r, double * int2_grad1_u12,
                           double * tmpS, double * tmpJ, double * tmpR,
                           double * tmpF);
 
 extern void no_1e_tmpF_os(int n_grid1, int n_mo, int ne_b, int ne_a,
-                          double * wr1, double * mos_r_in_r, double * int2_grad1_u12,
+                          double * mos_r_in_r, double * int2_grad1_u12,
                           double * tmpS, double * tmpJ, double * tmpR,
                           double * tmpF);
 
@@ -297,7 +297,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
         // Closed-Shell
 
-        no_1e_tmpL_cs(n_grid1, n_mo, ne_b, d_mos_l_in_r, d_int2_grad1_u12, d_tmpL);
+        no_1e_tmpL_cs(n_grid1, n_mo, ne_b, d_wr1, d_mos_l_in_r, d_int2_grad1_u12, d_tmpL);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
         no_1e_tmpR_cs(n_grid1, n_mo, ne_b, d_mos_r_in_r, d_int2_grad1_u12, d_tmpR);
@@ -308,14 +308,14 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
         no_1e_tmpE_cs(n_grid1, n_mo, ne_b, d_wr1, d_mos_l_in_r, d_int2_grad1_u12, d_tmpJ, d_tmpL, d_tmpE);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
-        no_1e_tmpF_cs(n_grid1, n_mo, ne_b, d_wr1, d_mos_r_in_r, d_int2_grad1_u12, d_tmpS, d_tmpJ, d_tmpR, d_tmpF);
+        no_1e_tmpF_cs(n_grid1, n_mo, ne_b, d_mos_r_in_r, d_int2_grad1_u12, d_tmpS, d_tmpJ, d_tmpR, d_tmpF);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
     } else {
 
         // Open-Shell
 
-        no_1e_tmpL_os(n_grid1, n_mo, ne_b, ne_a, d_mos_l_in_r, d_int2_grad1_u12, d_tmpL);
+        no_1e_tmpL_os(n_grid1, n_mo, ne_b, ne_a, d_wr1, d_mos_l_in_r, d_int2_grad1_u12, d_tmpL);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
         no_1e_tmpR_os(n_grid1, n_mo, ne_b, ne_a, d_mos_r_in_r, d_int2_grad1_u12, d_tmpR);
@@ -326,7 +326,7 @@ int cutc_no_1e(int n_grid1, int n_mo, int ne_a, int ne_b,
         no_1e_tmpE_os(n_grid1, n_mo, ne_b, ne_a, d_wr1, d_mos_l_in_r, d_int2_grad1_u12, d_tmpJ, d_tmpL, d_tmpE);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
-        no_1e_tmpF_os(n_grid1, n_mo, ne_b, ne_a, d_wr1, d_mos_r_in_r, d_int2_grad1_u12, d_tmpS, d_tmpJ, d_tmpR, d_tmpF);
+        no_1e_tmpF_os(n_grid1, n_mo, ne_b, ne_a, d_mos_r_in_r, d_int2_grad1_u12, d_tmpS, d_tmpJ, d_tmpR, d_tmpF);
         checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
 
     }

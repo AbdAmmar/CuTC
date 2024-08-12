@@ -52,13 +52,13 @@ __global__ void no_1e_tmpR_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
             for(ie = ne_b; ie < ne_a; ie++) {
 
-                mor_tmp = mos_r_in_r[i_grid1 + ie * n_grid1];
+                mor_tmp = 0.5 * mos_r_in_r[i_grid1 + ie * n_grid1];
 
                 jjx = jx + ie * n1;
 
-                tmpR[ix] += 0.5 * mor_tmp * int2_grad1_u12[jjx            ];
-                tmpR[iy] += 0.5 * mor_tmp * int2_grad1_u12[jjx +   n_grid1];
-                tmpR[iz] += 0.5 * mor_tmp * int2_grad1_u12[jjx + 2*n_grid1];
+                tmpR[ix] += mor_tmp * int2_grad1_u12[jjx            ];
+                tmpR[iy] += mor_tmp * int2_grad1_u12[jjx +   n_grid1];
+                tmpR[iz] += mor_tmp * int2_grad1_u12[jjx + 2*n_grid1];
 
             }
 

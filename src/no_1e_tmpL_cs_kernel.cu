@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 __global__ void no_1e_tmpL_cs_kernel(int n_grid1, int n_mo, int ne_b, 
-                                     double * mos_l_in_r, double * int2_grad1_u12,
+                                     double * wr1, double * mos_l_in_r, double * int2_grad1_u12,
                                      double * tmpL) {
 
 
@@ -16,6 +16,7 @@ __global__ void no_1e_tmpL_cs_kernel(int n_grid1, int n_mo, int ne_b,
     int n1;
     int n2;
 
+    double wr1_tmp;
     double mol_tmp;
 
 
@@ -25,6 +26,8 @@ __global__ void no_1e_tmpL_cs_kernel(int n_grid1, int n_mo, int ne_b,
     n2 = n1 * n_mo;
 
     while(i_grid1 < n_grid1) {
+
+        wr1_tmp = wr1[i_grid1];
 
         for(p_mo = 0; p_mo < n_mo; p_mo++) {
 
@@ -38,7 +41,7 @@ __global__ void no_1e_tmpL_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
             for(ie = 0; ie < ne_b; ie++) {
 
-                mol_tmp = mos_l_in_r[i_grid1 + ie * n_grid1];
+                mol_tmp = wr1_tmp * mos_l_in_r[i_grid1 + ie * n_grid1];
 
                 iix = ix + ie * n2;
 
@@ -58,7 +61,7 @@ __global__ void no_1e_tmpL_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
 
 extern "C" void no_1e_tmpL_cs(int n_grid1, int n_mo, int ne_b,
-                              double * mos_l_in_r, double * int2_grad1_u12,
+                              double * wr1, double * mos_l_in_r, double * int2_grad1_u12,
                               double * tmpL) {
 
     int nBlocks, blockSize;
@@ -69,7 +72,7 @@ extern "C" void no_1e_tmpL_cs(int n_grid1, int n_mo, int ne_b,
     printf("lunching no_1e_tmpL_cs_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     no_1e_tmpL_cs_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo, ne_b,
-                                                 mos_l_in_r, int2_grad1_u12,
+                                                 wr1, mos_l_in_r, int2_grad1_u12,
                                                  tmpL);
 
 }

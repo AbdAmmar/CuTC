@@ -77,7 +77,6 @@ int cutc_no_2e(int n_grid1, int n_mo, int ne_a, int ne_b,
     size_t sizeA, sizeB;
     size_t sizeC1, sizeC2;
     size_t sizeD2;
-    size_t sizeE;
 
     size_t size_2e;
 

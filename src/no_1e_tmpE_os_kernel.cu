@@ -59,13 +59,13 @@ __global__ void no_1e_tmpE_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
             tmpE[iE            ] = wr1_tmp * mol_tmp;
             tmpE[iE +   n_grid1] = -2.0 * (Lx * Jx + Ly * Jy + Lz * Jz);
-            tmpE[iE + 2*n_grid1] = wr1_tmp * Lx;
-            tmpE[iE + 3*n_grid1] = wr1_tmp * Ly;
-            tmpE[iE + 4*n_grid1] = wr1_tmp * Lz;
+            tmpE[iE + 2*n_grid1] = Lx;
+            tmpE[iE + 3*n_grid1] = Ly;
+            tmpE[iE + 4*n_grid1] = Lz;
 
             for(je = 0; je < ne_b; je++) {
 
-                mol_j = mos_l_in_r[i_grid1 + je*n_grid1];
+                mol_j = wr1_tmp * mos_l_in_r[i_grid1 + je*n_grid1];
 
                 kx = i_grid1 + je * n2;
 
@@ -84,7 +84,7 @@ __global__ void no_1e_tmpE_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
             for(je = 0; je < ne_b; je++) {
 
-                mol_j = mos_l_in_r[i_grid1 + je*n_grid1];
+                mol_j = 0.5 * wr1_tmp *  mos_l_in_r[i_grid1 + je*n_grid1];
 
                 kx = i_grid1 + je * n2;
                 mx = i_grid1 + je * n1;
@@ -93,15 +93,15 @@ __global__ void no_1e_tmpE_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
                 for(ie = ne_b; ie < ne_a; ie++) {
 
-                    mol_i = mos_l_in_r[i_grid1 + ie*n_grid1];
+                    mol_i = 0.5 * wr1_tmp * mos_l_in_r[i_grid1 + ie*n_grid1];
 
                     jjx = iL + ie * n2;
                     kkx = kx + ie * n1;
                     mmx = mx + ie * n2;
 
-                    tmpE[iiE] += 0.5 * (mol_j * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ] + mol_i * int2_grad1_u12[llx            ] * int2_grad1_u12[mmx            ]);
-                    tmpE[iiE] += 0.5 * (mol_j * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1] + mol_i * int2_grad1_u12[llx +   n_grid1] * int2_grad1_u12[mmx +   n_grid1]);
-                    tmpE[iiE] += 0.5 * (mol_j * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1] + mol_i * int2_grad1_u12[llx + 2*n_grid1] * int2_grad1_u12[mmx + 2*n_grid1]);
+                    tmpE[iiE] += mol_j * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ] + mol_i * int2_grad1_u12[llx            ] * int2_grad1_u12[mmx            ];
+                    tmpE[iiE] += mol_j * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1] + mol_i * int2_grad1_u12[llx +   n_grid1] * int2_grad1_u12[mmx +   n_grid1];
+                    tmpE[iiE] += mol_j * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1] + mol_i * int2_grad1_u12[llx + 2*n_grid1] * int2_grad1_u12[mmx + 2*n_grid1];
 
                 } // ie
 
@@ -109,7 +109,7 @@ __global__ void no_1e_tmpE_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
 
             for(je = ne_b; je < ne_a; je++) {
 
-                mol_j = mos_l_in_r[i_grid1 + je*n_grid1];
+                mol_j = 0.5 * wr1_tmp * mos_l_in_r[i_grid1 + je*n_grid1];
 
                 kx = i_grid1 + je * n2;
 
@@ -118,9 +118,9 @@ __global__ void no_1e_tmpE_os_kernel(int n_grid1, int n_mo, int ne_b, int ne_a,
                     jjx = iL + ie * n2;
                     kkx = kx + ie * n1;
 
-                    tmpE[iiE] += 0.5 * mol_j * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ];
-                    tmpE[iiE] += 0.5 * mol_j * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1];
-                    tmpE[iiE] += 0.5 * mol_j * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
+                    tmpE[iiE] += mol_j * int2_grad1_u12[jjx            ] * int2_grad1_u12[kkx            ];
+                    tmpE[iiE] += mol_j * int2_grad1_u12[jjx +   n_grid1] * int2_grad1_u12[kkx +   n_grid1];
+                    tmpE[iiE] += mol_j * int2_grad1_u12[jjx + 2*n_grid1] * int2_grad1_u12[kkx + 2*n_grid1];
 
                 } // ie
 

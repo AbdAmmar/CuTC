@@ -54,13 +54,13 @@ __global__ void no_1e_tmpE_cs_kernel(int n_grid1, int n_mo, int ne_b,
 
             tmpE[iE            ] = wr1_tmp * mol_tmp;
             tmpE[iE +   n_grid1] = -2.0 * (Lx * Jx + Ly * Jy + Lz * Jz);
-            tmpE[iE + 2*n_grid1] = wr1_tmp * Lx;
-            tmpE[iE + 3*n_grid1] = wr1_tmp * Ly;
-            tmpE[iE + 4*n_grid1] = wr1_tmp * Lz;
+            tmpE[iE + 2*n_grid1] = Lx;
+            tmpE[iE + 3*n_grid1] = Ly;
+            tmpE[iE + 4*n_grid1] = Lz;
 
             for(je = 0; je < ne_b; je++) {
 
-                mol_j = mos_l_in_r[i_grid1 + je*n_grid1];
+                mol_j = wr1_tmp * mos_l_in_r[i_grid1 + je*n_grid1];
 
                 kx = i_grid1 + je * n2;
 
