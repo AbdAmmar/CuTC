@@ -7,12 +7,12 @@ module cutc_module
 
   interface
 
-    subroutine cutc_int_c(nBlocks, blockSize,                     &
-                          n_grid1, n_grid2, n_ao, n_nuc, size_bh, &
-                          r1, wr1, r2, wr2, rn,                   &
-                          aos_data1, aos_data2,                   &
-                          c_bh, m_bh, n_bh, o_bh,                 &
-                          int2_grad1_u12_ao, int_2e_ao) bind(C, name = "cutc_int_c")
+    subroutine cutc_int(nBlocks, blockSize,                     &
+                        n_grid1, n_grid2, n_ao, n_nuc, size_bh, &
+                        r1, wr1, r2, wr2, rn,                   &
+                        aos_data1, aos_data2,                   &
+                        c_bh, m_bh, n_bh, o_bh,                 &
+                        int2_grad1_u12_ao, int_2e_ao) bind(C, name = "cutc_int")
 
       import c_int, c_double
       integer(c_int), intent(in), value :: nBlocks, blockSize
@@ -34,7 +34,7 @@ module cutc_module
       real(c_double), intent(out)       :: int2_grad1_u12_ao(n_ao,n_ao,n_grid1,3)
       real(c_double), intent(out)       :: int_2e_ao(n_ao,n_ao,n_ao,n_ao)
 
-    end subroutine cutc_int_c
+    end subroutine cutc_int
 
   end interface
 

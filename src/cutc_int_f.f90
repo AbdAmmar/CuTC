@@ -1,5 +1,5 @@
 
-program cutc_int
+program cutc_int_f90
 
     use cutc_module
 
@@ -54,13 +54,13 @@ program cutc_int
     int2_grad1_u12_ao = 0.d0
     int_2e_ao = 0.d0
 
-    call cutc_int_c(nBlocks, blockSize,                     &
-                    n_grid1, n_grid2, n_ao, n_nuc, size_bh, &
-                    r1, wr1, r2,  wr2, rn,                  &
-                    aos_data1, aos_data2,                   &
-                    c_bh, m_bh, n_bh, o_bh,                 &
-                    int2_grad1_u12_ao, int_2e_ao)
+    call cutc_int(nBlocks, blockSize,                     &
+                  n_grid1, n_grid2, n_ao, n_nuc, size_bh, &
+                  r1, wr1, r2,  wr2, rn,                  &
+                  aos_data1, aos_data2,                   &
+                  c_bh, m_bh, n_bh, o_bh,                 &
+                  int2_grad1_u12_ao, int_2e_ao)
 
-end program cutc_int
+end program cutc_int_f90
 
 

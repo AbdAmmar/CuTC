@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 __global__ void no_2e_tmpC1_kernel(int n_grid1, int n_mo,
-                                   double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                                   double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
                                    double * tmpJ, double * tmpO, double * tmpA, double * tmpB,
                                    double * tmpC1) {
 
@@ -17,6 +17,7 @@ __global__ void no_2e_tmpC1_kernel(int n_grid1, int n_mo,
 
     int n1, n2;
 
+    double wr1_tmp;
     double mol_tmp;
     double mor_tmp;
     double O;
@@ -32,11 +33,13 @@ __global__ void no_2e_tmpC1_kernel(int n_grid1, int n_mo,
 
     while(i_grid1 < n_grid1) {
 
-        O = tmpO[i_grid1];
+        wr1_tmp = wr1[i_grid1];
 
-        Jx = tmpJ[i_grid1            ];
-        Jy = tmpJ[i_grid1 +   n_grid1];
-        Jz = tmpJ[i_grid1 + 2*n_grid1];
+        O = wr1_tmp * tmpO[i_grid1];
+
+        Jx = wr1_tmp * tmpJ[i_grid1            ];
+        Jy = wr1_tmp * tmpJ[i_grid1 +   n_grid1];
+        Jz = wr1_tmp * tmpJ[i_grid1 + 2*n_grid1];
 
         for(p_mo = 0; p_mo < n_mo; p_mo++) {
 
@@ -78,7 +81,7 @@ __global__ void no_2e_tmpC1_kernel(int n_grid1, int n_mo,
 
 
 extern "C" void no_2e_tmpC1(int n_grid1, int n_mo,
-                            double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
+                            double * wr1, double * mos_l_in_r, double * mos_r_in_r, double * int2_grad1_u12,
                             double * tmpJ, double * tmpO, double * tmpA, double * tmpB,
                             double * tmpC1) {
 
@@ -90,7 +93,7 @@ extern "C" void no_2e_tmpC1(int n_grid1, int n_mo,
     printf("lunching no_2e_tmpC1_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
     no_2e_tmpC1_kernel<<<nBlocks, blockSize>>>(n_grid1, n_mo,
-                                               mos_l_in_r, mos_r_in_r, int2_grad1_u12,
+                                               wr1, mos_l_in_r, mos_r_in_r, int2_grad1_u12,
                                                tmpJ, tmpO, tmpA, tmpB,
                                                tmpC1);
 
