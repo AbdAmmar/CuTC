@@ -1,7 +1,7 @@
 
 #include <stdio.h>
 
-__global__ void no_0e_tmpE_kernel(int n_grid1, int nBlocks, int blockSize,
+__global__ void no_0e_tmpE_kernel(int n_grid1,
                                   double * wr1, double * tmpO, double * tmpS, double * tmpJ, double * tmpM,
                                   double * tmpE) {
 
@@ -19,9 +19,10 @@ __global__ void no_0e_tmpE_kernel(int n_grid1, int nBlocks, int blockSize,
     double Jx, Jy, Jz;
     double Mx, My, Mz;
 
+    i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
+    cacheIndex = threadIdx.x;
     tmpE_loc = 0.0;
 
-    i_grid1 = blockIdx.x * blockDim.x + threadIdx.x;
 
     while(i_grid1 < n_grid1) {
 
@@ -38,11 +39,11 @@ __global__ void no_0e_tmpE_kernel(int n_grid1, int nBlocks, int blockSize,
         My = tmpM[i_grid1 +   n_grid1];
         Mz = tmpM[i_grid1 + 2*n_grid1];
 
-        tmpE_loc = wr1_tmp * (O * S - 2.0 * (Jx*Mx + Jy*My + Jz*Mz));
+        tmpE_loc += wr1_tmp * (O * S - 2.0 * (Jx*Mx + Jy*My + Jz*Mz));
+
+        i_grid1 += blockDim.x * gridDim.x;
 
     }
-
-    cacheIndex = threadIdx.x;
 
     cache[cacheIndex] = tmpE_loc;
     __syncthreads();
@@ -50,7 +51,7 @@ __global__ void no_0e_tmpE_kernel(int n_grid1, int nBlocks, int blockSize,
     i = blockDim.x / 2;
     while (i != 0) {
         if (cacheIndex < i) {
-            cache[cacheIndex] += tmpE_loc;
+            cache[cacheIndex] += cache[cacheIndex + i];
         }
         __syncthreads();
         i /= 2;
@@ -71,9 +72,9 @@ extern "C" void no_0e_tmpE(int n_grid1, int nBlocks, int blockSize,
 
     printf("lunching no_0e_tmpE_kernel with %d blocks and %d threads/block\n", nBlocks, blockSize);
 
-    no_0e_tmpE_kernel<<<nBlocks, blockSize>>>(n_grid1, nBlocks, blockSize,
-                                              wr1, tmpO, tmpS, tmpJ, tmpM,
-                                              tmpE);
+    no_0e_tmpE_kernel<<<nBlocks, blockSize, blockSize*sizeof(double)>>>(n_grid1,
+                                                                        wr1, tmpO, tmpS, tmpJ, tmpM,
+                                                                        tmpE);
 
 }
 

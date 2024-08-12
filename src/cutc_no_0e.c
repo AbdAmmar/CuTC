@@ -96,8 +96,6 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
     size_t sizeM, sizeS;
     size_t sizeL;
     size_t sizeR;
-    size_t sizeG;
-    size_t sizeH;
 
     double * d_wr1;
     double * d_mos_l_in_r;
@@ -105,7 +103,6 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
     double * d_int2_grad1_u12;
 
     double * d_no_0e;
-    double * d_no_0e_os;
 
 
     double * d_tmpO;
@@ -114,8 +111,6 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
     double * d_tmpS;
     double * d_tmpL;
     double * d_tmpR;
-    double * d_tmpG;
-    double * d_tmpH;
     double * d_tmpE;
 
 
@@ -196,6 +191,8 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
                                  &d_tmpR[0], 1,
                                  &d_no_0e[0]), "cublasDdot", __FILE__, __LINE__);
 
+    checkCudaErrors(cudaMemcpy(h_no_0e, d_no_0e, size_0e, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+
 
     if(ne_a == ne_b) {
 
@@ -239,22 +236,49 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
 
+    int i_block;
     int s_blocks = 32;
     int n_blocks = (n_grid1 + s_blocks - 1) / s_blocks;
-    checkCudaErrors(cudaMalloc((void**)&d_tmpE, n_blocks*sizeof(double)), "cudaMalloc", __FILE__, __LINE__);
+
+    size_t sizeE = n_blocks * sizeof(double);
+
+    checkCudaErrors(cudaMalloc((void**)&d_tmpE, sizeE), "cudaMalloc", __FILE__, __LINE__);
 
     no_0e_tmpE(n_grid1, n_blocks, s_blocks, d_wr1, d_tmpO, d_tmpS, d_tmpJ, d_tmpM, d_tmpE);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
-    for(int i_blocks=0; i_blocks<n_blocks; i_blocks++) {
-        d_no_0e[0] += d_tmpE[i_blocks];
+    double * h_tmpE;
+    h_tmpE = (double*) malloc(sizeE);
+    if(h_tmpE == NULL) {
+        fprintf(stderr, "Memory allocation failed for h_tmpE\n");
+        exit(0);
     }
+    checkCudaErrors(cudaMemcpy(h_tmpE, d_tmpE, sizeE, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaFree(d_tmpE), "cudaFree", __FILE__, __LINE__);
+
+    for(i_block=0; i_block<n_blocks; i_block++) {
+        h_no_0e[0] += h_tmpE[i_block];
+    }
+    h_no_0e[0] = -2.0 * h_no_0e[0];
+
 
     if(ne_a != ne_b) {
 
-        sizeG = 3 * n_grid1 * ne_b * sizeof(double);
-        sizeH = 3 * n_grid1 * ne_b * sizeof(double);
+        double * h_no_0e_os;
+        h_no_0e_os = (double*) malloc(size_0e);
+        if(h_no_0e_os == NULL) {
+            fprintf(stderr, "Memory allocation failed for h_no_0e_os\n");
+            exit(0);
+        }
+
+        double * d_no_0e_os;
+        double * d_tmpG;
+        double * d_tmpH;
+
+        size_t sizeG = 3 * n_grid1 * ne_b * sizeof(double);
+        size_t sizeH = 3 * n_grid1 * ne_b * sizeof(double);
 
         checkCudaErrors(cudaMalloc((void**)&d_no_0e_os, size_0e), "cudaMalloc", __FILE__, __LINE__);
 
@@ -277,13 +301,15 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
         checkCudaErrors(cudaFree(d_tmpG), "cudaFree", __FILE__, __LINE__);
         checkCudaErrors(cudaFree(d_tmpH), "cudaFree", __FILE__, __LINE__);
 
-        d_no_0e_os[0] += d_no_0e[0];
+        checkCudaErrors(cudaMemcpy(h_no_0e_os, d_no_0e_os, size_0e, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+
+        checkCudaErrors(cudaFree(d_no_0e_os), "cudaFree", __FILE__, __LINE__);
+
+        h_no_0e[0] -= 2.0 * h_no_0e_os[0];
 
     }
 
 
-
-    checkCudaErrors(cudaMemcpy(h_no_0e, d_no_0e, size_0e, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
     checkCudaErrors(cudaFree(d_wr1), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_mos_l_in_r), "cudaFree", __FILE__, __LINE__);
@@ -298,7 +324,6 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
     checkCudaErrors(cudaFree(d_tmpJ), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpM), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_tmpS), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_tmpE), "cudaFree", __FILE__, __LINE__);
 
     checkCublasErrors(cublasDestroy(myhandle), "cublasDestroy", __FILE__, __LINE__);
 
