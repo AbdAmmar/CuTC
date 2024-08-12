@@ -67,7 +67,7 @@ extern void no_2e_tmpD2(int n_grid1, int n_mo, double * wr1, double * mos_l_in_r
 
 extern void no_1e_tmpD(int n_grid1, double * wr1, double * tmpO, double * tmpJ, double * tmpM, double * tmpD);
 
-extern void no_0e_tmpE(int n_grid1, int n_blocks, int s_blocks, double * wr1, double * tmpO, double * tmpS, double * tmpJ, double * tmpM, double * tmpE);
+extern void no_0e_tmpU(int n_grid1, int n_blocks, int s_blocks, double * wr1, double * tmpO, double * tmpS, double * tmpJ, double * tmpM, double * tmpE);
 
 extern void trans_inplace(double * data, int size);
 

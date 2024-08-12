@@ -71,7 +71,7 @@ extern void no_tmpS_os(int n_grid1, int n_mo, int ne_b, int ne_a,
                        double * tmpS);
 
 
-extern void no_0e_tmpE(int n_grid1, int n_blocks, int s_blocks,
+extern void no_0e_tmpU(int n_grid1, int n_blocks, int s_blocks,
                        double * wr1, double * tmpO, double * tmpS, double * tmpJ, double * tmpM,
                        double * tmpE);
 
@@ -244,7 +244,7 @@ int cutc_no_0e(int n_grid1, int n_mo, int ne_a, int ne_b,
 
     checkCudaErrors(cudaMalloc((void**)&d_tmpE, sizeE), "cudaMalloc", __FILE__, __LINE__);
 
-    no_0e_tmpE(n_grid1, n_blocks, s_blocks, d_wr1, d_tmpO, d_tmpS, d_tmpJ, d_tmpM, d_tmpE);
+    no_0e_tmpU(n_grid1, n_blocks, s_blocks, d_wr1, d_tmpO, d_tmpS, d_tmpJ, d_tmpM, d_tmpE);
     checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
     checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
