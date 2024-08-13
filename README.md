@@ -18,7 +18,7 @@ This CUDA library is designed for the efficient computation of Transcorrelated i
 ### Transcorrelated Integrals
 
 The library computes and provides:
-- **2-Electron Transcorrelated (TC) Integrals**: Excluding the Coulomb term.
+- **2-Electron Transcorrelated Integrals**: Excluding the Coulomb term.
 - **Key Tersors for 3-Electron Integrals**: Specifically, the tensors of the form:
 
 $$
