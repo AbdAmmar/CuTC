@@ -51,6 +51,7 @@ int cutc_no(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     cudaEvent_t start_loc, stop_loc;
+    cudaEvent_t start_tot, stop_tot;
 
     float time_loc=0.0f;
     float time_tot=0.0f;
@@ -67,6 +68,10 @@ int cutc_no(int n_grid1, int n_mo, int ne_a, int ne_b,
 
 
     printf(" Computing 0e, 1e, and 2e-Elements for Normal-Ordering With CuTC\n");
+
+    checkCudaErrors(cudaEventCreate(&start_tot), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventCreate(&stop_tot), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(start_tot, 0), "cudaEventRecord", __FILE__, __LINE__);
 
 
 
@@ -760,7 +765,12 @@ int cutc_no(int n_grid1, int n_mo, int ne_a, int ne_b,
     printf("Ellapsed time for Ddot  = %.3f sec\n", tDdot/1000.0f);
     printf("Ellapsed time for addT  = %.3f sec\n", t1/1000.0f);
     printf("Ellapsed time for Trans = %.3f sec\n", t2/1000.0f);
-    printf("Ellapsed time on GPU for cutc_no = %.3f sec\n", time_tot/1000.0f);
+    printf("Ellapsed (effective) time on GPU for cutc_no = %.3f sec\n", time_tot/1000.0f);
+
+    checkCudaErrors(cudaEventRecord(stop_tot, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_tot), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_tot, stop_tot), "cudaEventElapsedTime", __FILE__, __LINE__);
+    printf("Ellapsed (total) time on GPU for cutc_no = %.3f sec\n", time_loc/1000.0f);
 
 
     return 0;

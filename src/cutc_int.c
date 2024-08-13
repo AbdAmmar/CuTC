@@ -42,6 +42,7 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
 
     cudaEvent_t start_loc, stop_loc;
+    cudaEvent_t start_tot, stop_tot;
 
     float time_loc=0.0f;
     float time_tot=0.0f;
@@ -49,6 +50,10 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
 
     printf(" Computing TC-Integrals With CuTC\n");
+
+    checkCudaErrors(cudaEventCreate(&start_tot), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventCreate(&stop_tot), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(start_tot, 0), "cudaEventRecord", __FILE__, __LINE__);
 
     checkCudaErrors(cudaEventCreate(&start_loc), "cudaEventCreate", __FILE__, __LINE__);
     checkCudaErrors(cudaEventCreate(&stop_loc), "cudaEventCreate", __FILE__, __LINE__);
@@ -140,6 +145,7 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
     time_tot += time_loc;
+    printf("Ellapsed time for get_int2_grad1_u12_ao = %.3f sec\n", time_loc/1000.0f);
 
 
     checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);
@@ -184,6 +190,7 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
     time_tot += time_loc;
+    printf("Ellapsed time for get_int_2e_ao = %.3f sec\n", time_loc/1000.0f);
 
     checkCudaErrors(cudaFree(d_wr1), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_aos_data1), "cudaFree", __FILE__, __LINE__);
@@ -214,8 +221,14 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaEventDestroy(stop_loc), "cudaEventDestroy", __FILE__, __LINE__);
 
 
+
     printf("Ellapsed time for Device <-> Host transf = %.3f sec\n", tHD/1000.0f);
-    printf("Ellapsed time on GPU for cutc_int = %.3f sec\n", time_tot/1000.0f);
+    printf("Ellapsed (effective) time on GPU for cutc_int = %.3f sec\n", time_tot/1000.0f);
+
+    checkCudaErrors(cudaEventRecord(stop_tot, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_tot), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_tot, stop_tot), "cudaEventElapsedTime", __FILE__, __LINE__);
+    printf("Ellapsed (total) time on GPU for cutc_int = %.3f sec\n", time_loc/1000.0f);
 
     return 0;
 }
