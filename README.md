@@ -1,4 +1,4 @@
-# Transcorrelated Integrals CUDA Library
+# CUDA Library for Transcorrelated Integrals 
 
 ## Table of Contents
 
