@@ -10,7 +10,7 @@
 
 ## Overview
 
-This CUDA library is designed for the efficient computation of Transcorrelated integrals and dressing elements, enabling the application of normal-ordering using orthogonal and bi-orthogonal molecular orbitals.
+This CUDA library is designed for the efficient computation of Transcorrelated integrals and dressing elements for the application of normal-ordering using orthogonal or bi-orthogonal molecular orbitals.
 
 
 ## Features
