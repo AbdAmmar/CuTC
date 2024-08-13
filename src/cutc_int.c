@@ -6,6 +6,8 @@
 #include <string.h>
 #include <math.h>
 #include <cublas_v2.h>
+#include <time.h>
+
 
 #include "cutc_int.h"
 
@@ -48,8 +50,11 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     float time_tot=0.0f;
     float tHD=0.0f;
 
+    clock_t time_req;
 
     printf(" Computing TC-Integrals With CuTC\n");
+
+    //time_req = clock();
 
     checkCudaErrors(cudaEventCreate(&start_tot), "cudaEventCreate", __FILE__, __LINE__);
     checkCudaErrors(cudaEventCreate(&stop_tot), "cudaEventCreate", __FILE__, __LINE__);
@@ -223,12 +228,16 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
 
     printf("Ellapsed time for Device <-> Host transf = %.3f sec\n", tHD/1000.0f);
-    printf("Ellapsed (effective) time on GPU for cutc_int = %.3f sec\n", time_tot/1000.0f);
+    //printf("Ellapsed (effective) time on GPU for cutc_int = %.3f sec\n", time_tot/1000.0f);
 
     checkCudaErrors(cudaEventRecord(stop_tot, 0), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_tot), "cudaEventSynchronize", __FILE__, __LINE__);
     checkCudaErrors(cudaEventElapsedTime(&time_loc, start_tot, stop_tot), "cudaEventElapsedTime", __FILE__, __LINE__);
     printf("Ellapsed (total) time on GPU for cutc_int = %.3f sec\n", time_loc/1000.0f);
+
+    //time_req = clock() - time_req;
+    //printf("Ellapsed time (sec) : %f sec\n", (float)time_req / CLOCKS_PER_SEC);
+
 
     return 0;
 }
