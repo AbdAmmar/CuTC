@@ -7,21 +7,7 @@
 #include <math.h>
 #include <cublas_v2.h>
 
-
-extern void checkCudaErrors(cudaError_t err, const char * msg, const char * file, int line);
-extern void checkCublasErrors(cublasStatus_t status, const char * msg, const char * file, int line);
-
-
-
-extern void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
-                                  int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
-                                  double * r1, double * r2, double * wr2, double * rn, double * aos_data2,
-                                  double * c_bh, int * m_bh, int * n_bh, int * o_bh,
-                                  double * int2_grad1_u12_ao);
-
-extern void get_int_2e_ao(int n_grid1, int n_ao, double * wr1, double * aos_data1,
-                          double * int2_grad1_u12_ao, double * tc_int_2e_ao);
-
+#include "cutc_int.h"
 
 
 int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int blockySize, int blockzSize,
@@ -55,13 +41,23 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     dim3 dimBlock;
 
 
+    cudaEvent_t start_loc, stop_loc;
+
+    float time_loc=0.0f;
+    float time_tot=0.0f;
+    float tHD=0.0f;
+
+
     printf(" Computing TC-Integrals With CuTC\n");
+
+    checkCudaErrors(cudaEventCreate(&start_loc), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventCreate(&stop_loc), "cudaEventCreate", __FILE__, __LINE__);
 
 
     cudaGetDeviceProperties(&deviceProp, 0);
-    printf("Max threads per block: %d\n", deviceProp.maxThreadsPerBlock);
-    printf("Max block dimensions: %d x %d x %d\n", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
-    printf("Max grid dimensions: %d x %d x %d\n", deviceProp.maxGridSize[0], deviceProp.maxGridSize[1], deviceProp.maxGridSize[2]);
+    //printf("Max threads per block: %d\n", deviceProp.maxThreadsPerBlock);
+    //printf("Max block dimensions: %d x %d x %d\n", deviceProp.maxThreadsDim[0], deviceProp.maxThreadsDim[1], deviceProp.maxThreadsDim[2]);
+    //printf("Max grid dimensions: %d x %d x %d\n", deviceProp.maxGridSize[0], deviceProp.maxGridSize[1], deviceProp.maxGridSize[2]);
 
     dimGrid.x = nxBlocks;
     dimGrid.y = nyBlocks;
@@ -117,24 +113,33 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
 
 
+    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
-
     checkCudaErrors(cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
-
     checkCudaErrors(cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    tHD = time_loc;
+    time_tot += time_loc;
 
 
+    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
     get_int2_grad1_u12_ao(dimGrid, dimBlock, 
                           n_grid1, n_grid2, n_ao, n_nuc, size_bh,
                           d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
                           d_c_bh, d_m_bh, d_n_bh, d_o_bh,
                           d_int2_grad1_u12_ao);
+    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    time_tot += time_loc;
 
 
     checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);
@@ -163,10 +168,22 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaMalloc((void**)&d_aos_data1, size_aos_r1), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_int_2e_ao, size_int2), "cudaMalloc", __FILE__, __LINE__);
 
+    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_wr1, h_wr1, size_wr1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_aos_data1, h_aos_data1, size_aos_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    tHD += time_loc;
+    time_tot += time_loc;
 
+
+    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
     get_int_2e_ao(n_grid1, n_ao, d_wr1, d_aos_data1, d_int2_grad1_u12_ao, d_int_2e_ao);
+    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    time_tot += time_loc;
 
     checkCudaErrors(cudaFree(d_wr1), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_aos_data1), "cudaFree", __FILE__, __LINE__);
@@ -177,15 +194,29 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
     // transfer data to Host
 
+    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1_send, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+    tHD += time_loc;
+    time_tot += time_loc;
 
     checkCudaErrors(cudaFree(d_int2_grad1_u12_ao), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(d_int_2e_ao), "cudaFree", __FILE__, __LINE__);
 
     // // //
 
-    printf(" Done ;)\n");
+
+
+    checkCudaErrors(cudaEventDestroy(start_loc), "cudaEventDestroy", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventDestroy(stop_loc), "cudaEventDestroy", __FILE__, __LINE__);
+
+
+    printf("Ellapsed time for Device <-> Host transf = %.3f sec\n", tHD/1000.0f);
+    printf("Ellapsed time on GPU for cutc_int = %.3f sec\n", time_tot/1000.0f);
+
     return 0;
 }
 

@@ -736,8 +736,8 @@ int cutc_no(int n_grid1, int n_mo, int ne_a, int ne_b,
 
     checkCublasErrors(cublasDestroy(myhandle), "cublasDestroy", __FILE__, __LINE__);
 
-    checkCudaErrors(cudaEventDestroy(start_loc), "cudaEventCreate", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventDestroy(stop_loc), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventDestroy(start_loc), "cudaEventDestroy", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventDestroy(stop_loc), "cudaEventDestroy", __FILE__, __LINE__);
 
     printf("Ellapsed time for Device <-> Host transf = %.3f sec\n", tHD/1000.0f);
     printf("Ellapsed time for tmpO  = %.3f sec\n", tO /1000.0f);
@@ -760,7 +760,7 @@ int cutc_no(int n_grid1, int n_mo, int ne_a, int ne_b,
     printf("Ellapsed time for Ddot  = %.3f sec\n", tDdot/1000.0f);
     printf("Ellapsed time for addT  = %.3f sec\n", t1/1000.0f);
     printf("Ellapsed time for Trans = %.3f sec\n", t2/1000.0f);
-    printf("Ellapsed time on GPU = %.3f sec\n", time_tot/1000.0f);
+    printf("Ellapsed time on GPU for cutc_no = %.3f sec\n", time_tot/1000.0f);
 
 
     return 0;

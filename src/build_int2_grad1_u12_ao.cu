@@ -38,7 +38,17 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
     cublasHandle_t myhandle;
 
+    cudaEvent_t start_loc, stop_loc;
+
+    float time_loc=0.0f;
+    float tDgemm=0.0f;
+    float t1=0.0f, t2=0.0f;
+
     checkCublasErrors(cublasCreate(&myhandle), "cublasCreate", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaEventCreate(&start_loc), "cudaEventCreate", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventCreate(&stop_loc), "cudaEventCreate", __FILE__, __LINE__);
+
 
     n_ao2 = n_ao * n_ao;
 
@@ -108,11 +118,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
             jj = j_pass * n_grid2_pass;
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             int_long_range_kernel<<<nBlocks_pass, blockSize>>>(jj, n_grid2_pass, n_grid2_pass,
                                                                n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t1 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
                                                                    jj, n_grid2_pass, n_grid2_pass,
                                                                    n_nuc, size_bh,
@@ -120,11 +137,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                                                    c_bh, m_bh, n_bh, o_bh,
                                                                    grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t2 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
                 mm = n_ao2 * (ii + m * n_grid1);
                 kk = kk0 * m;
+
+                checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
                 checkCublasErrors(cublasDgemm(myhandle,
                                               CUBLAS_OP_T, CUBLAS_OP_N,
                                               n_ao2, n_grid1_pass, n_grid2_pass,
@@ -133,6 +157,10 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                               &grad1_u12[kk], n_grid2_pass,
                                               &beta,
                                               &int2_grad1_u12_ao[mm], n_ao2), "cublasDgemm", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+                tDgemm += time_loc;
             }
 
             beta = 1.0;
@@ -143,11 +171,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
             jj = n2_pass * n_grid2_pass;
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             int_long_range_kernel<<<nBlocks_rest, blockSize>>>(jj, n_grid2_rest, n_grid2_pass,
                                                                n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t1 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_pass, n_grid1_pass,
                                                                    jj, n_grid2_rest, n_grid2_pass,
                                                                    n_nuc, size_bh,
@@ -155,11 +190,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                                                    c_bh, m_bh, n_bh, o_bh,
                                                                    grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t2 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
                 mm = n_ao2 * (ii + m * n_grid1);
                 kk = kk0 * m;
+
+                checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
                 checkCublasErrors(cublasDgemm(myhandle,
                                               CUBLAS_OP_T, CUBLAS_OP_N,
                                               n_ao2, n_grid1_pass, n_grid2_rest,
@@ -168,6 +210,10 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                               &grad1_u12[kk], n_grid2_pass,
                                               &beta,
                                               &int2_grad1_u12_ao[mm], n_ao2), "cublasDgemm", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+                tDgemm += time_loc;
             }
 
         }
@@ -184,11 +230,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
             jj = j_pass * n_grid2_pass;
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             int_long_range_kernel<<<nBlocks_pass, blockSize>>>(jj, n_grid2_pass, n_grid2_pass,
                                                                n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t1 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
                                                                    jj, n_grid2_pass, n_grid2_pass,
                                                                    n_nuc, size_bh,
@@ -196,11 +249,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                                                    c_bh, m_bh, n_bh, o_bh,
                                                                    grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t2 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
                 mm = n_ao2 * (ii + m * n_grid1);
                 kk = kk0 * m;
+
+                checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
                 checkCublasErrors(cublasDgemm(myhandle,
                                               CUBLAS_OP_T, CUBLAS_OP_N,
                                               n_ao2, n_grid1_rest, n_grid2_pass,
@@ -209,6 +269,10 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                               &grad1_u12[kk], n_grid2_pass,
                                               &beta,
                                               &int2_grad1_u12_ao[mm], n_ao2), "cublasDgemm", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+                tDgemm += time_loc;
             }
 
         }
@@ -217,11 +281,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
             jj = n2_pass * n_grid2_pass;
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             int_long_range_kernel<<<nBlocks_rest, blockSize>>>(jj, n_grid2_rest, n_grid2_pass,
                                                                n_grid2, n_ao, wr2, aos_data2, int_fct_long_range);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t1 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
+            checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
             cutc_int_bh_kernel<<<dimGrid, dimBlock, size_sh_mem>>>(ii, n_grid1_rest, n_grid1_pass,
                                                                    jj, n_grid2_rest, n_grid2_pass,
                                                                    n_nuc, size_bh,
@@ -229,11 +300,18 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                                                    c_bh, m_bh, n_bh, o_bh,
                                                                    grad1_u12);
             checkCudaErrors(cudaGetLastError(), "cudaGetLastError", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+            checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+            t2 += time_loc;
+
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
                 mm = n_ao2 * (ii + m * n_grid1);
                 kk = kk0 * m;
+
+                checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
                 checkCublasErrors(cublasDgemm(myhandle,
                                               CUBLAS_OP_T, CUBLAS_OP_N,
                                               n_ao2, n_grid1_rest, n_grid2_rest,
@@ -242,6 +320,10 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
                                               &grad1_u12[kk], n_grid2_pass,
                                               &beta,
                                               &int2_grad1_u12_ao[mm], n_ao2), "cublasDgemm", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
+                checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
+                tDgemm += time_loc;
             }
 
         }
@@ -253,6 +335,14 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
     checkCudaErrors(cudaFree(int_fct_long_range), "cudaFree", __FILE__, __LINE__);
     checkCudaErrors(cudaFree(grad1_u12), "cudaFree", __FILE__, __LINE__);
+
+    checkCudaErrors(cudaEventDestroy(start_loc), "cudaEventDestroy", __FILE__, __LINE__);
+    checkCudaErrors(cudaEventDestroy(stop_loc), "cudaEventDestroy", __FILE__, __LINE__);
+
+    printf("Ellapsed time for DGEMM to build int2_grad1_u12_ao = %.3f sec\n", tDgemm/1000.0f);
+    printf("Ellapsed time for int_long_range kernel = %.3f sec\n", t1/1000.0f);
+    printf("Ellapsed time for cutc_int_bh kernel = %.3f sec\n", t2/1000.0f);
+
 
 }
 
