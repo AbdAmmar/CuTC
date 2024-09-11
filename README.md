@@ -6,7 +6,6 @@
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-- [License](#license)
 - [Acknowledgments](#acknowledgments)
 
 ## Overview
@@ -76,11 +75,6 @@ A demonstration of how to use the library with Fortran is provided. To see an ex
 - **Fortran Module**: `CuTC/src/cutc_module.f90`
 
 These files contain example code and a module that interfaces with the C routine, showing how to invoke the library functions from Fortran.
-
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 
 ## Acknowledgments
