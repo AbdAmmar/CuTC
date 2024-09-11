@@ -7,6 +7,7 @@
 - [Installation](#installation)
 - [Usage](#usage)
 - [License](#license)
+- [Acknowledgments](#acknowledgments)
 
 ## Overview
 
@@ -81,4 +82,12 @@ These files contain example code and a module that interfaces with the C routine
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
+
+## Acknowledgments
+
+CuTC is supported by the [PTEROSOR](https://lcpq.github.io/PTEROSOR/) project that has received funding from the 
+European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme (Grant 
+agreement No. 863481).
+
+<img src="https://lcpq.github.io/PTEROSOR/img/ERC.png" width="200" />
 
