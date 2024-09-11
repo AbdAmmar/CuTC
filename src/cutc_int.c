@@ -37,6 +37,7 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     size_t size_int1, size_int2, size_int1_send;
     size_t size_jbh_d, size_jbh_i;
 
+    int dev, num_devices;
     struct cudaDeviceProp deviceProp;
 
     dim3 dimGrid;
@@ -53,6 +54,9 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     clock_t time_req;
 
     printf(" Computing TC-Integrals With CuTC\n");
+
+    cudaGetDeviceCount(&num_devices);
+    printf(" Number of CUDA devices: %d\n", num_devices);
 
     //time_req = clock();
 
@@ -106,7 +110,6 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
 
 
 
-    checkCudaErrors(cudaMalloc((void**)&d_r1, size_r1), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_r2, size_r2), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_wr2, size_wr2), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_rn, size_rn), "cudaMalloc", __FILE__, __LINE__);
@@ -118,13 +121,26 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaMalloc((void**)&d_n_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
     checkCudaErrors(cudaMalloc((void**)&d_o_bh, size_jbh_i), "cudaMalloc", __FILE__, __LINE__);
 
-    checkCudaErrors(cudaMalloc((void**)&d_int2_grad1_u12_ao, size_int1), "cudaMalloc", __FILE__, __LINE__);
 
 
+    int n_grid1_loc0, n_grid1_loc1, n_grid1_rem;
+    size_t size_r1_loc0, size_r1_loc1, size_r1_rem;
 
+    n_grid1_rem = n_grid1 % num_devices;
+    size_r1_loc1 = (n_grid1 - n_grid1_rem) / num_devices;
+    size_r1_loc0 = size_r1_loc1 + n_grid1_rem
 
-    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaMemcpy(d_r1, h_r1, size_r1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    size_r1_loc0 = 3 * n_grid1_loc0 * sizeof(double);
+    size_r1_loc1 = 3 * n_grid1_loc1 * sizeof(double);
+
+    size_int1_loc0 = 4 * n_grid1_loc0 * n_ao * n_ao * sizeof(double);
+    size_int1_loc1 = 4 * n_grid1_loc1 * n_ao * n_ao * sizeof(double);
+
+    dev = 0;
+    checkCudaErrors(cudaSetDevice(dev), "cudaSetDevice", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_r1[dev], size_r1_loc0), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMalloc((void**)&d_int2_grad1_u12_ao_t[dev], size_int1_loc0), "cudaMalloc", __FILE__, __LINE__);
+    checkCudaErrors(cudaMemcpy(d_r1[dev], h_r1[dev], size_r1_loc0, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
@@ -133,43 +149,71 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     checkCudaErrors(cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    tHD = time_loc;
-    time_tot += time_loc;
+    for (dev = 1; dev < num_devices; dev++) {
+        checkCudaErrors(cudaSetDevice(dev), "cudaSetDevice", __FILE__, __LINE__);
+        checkCudaErrors(cudaMalloc((void**)&d_r1[dev], size_r1_loc1), "cudaMalloc", __FILE__, __LINE__);
+        checkCudaErrors(cudaMalloc((void**)&d_int2_grad1_u12_ao_t[dev], size_int1_loc1), "cudaMalloc", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_r1[dev], h_r1[dev], size_r1_loc1, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_r2, h_r2, size_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_wr2, h_wr2, size_wr2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_rn, h_rn, size_rn, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_aos_data2, h_aos_data2, size_aos_r2, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_c_bh, h_c_bh, size_jbh_d, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_m_bh, h_m_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_n_bh, h_n_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+        checkCudaErrors(cudaMemcpy(d_o_bh, h_o_bh, size_jbh_i, cudaMemcpyHostToDevice), "cudaMemcpy", __FILE__, __LINE__);
+    }
 
-
-    checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
+    dev = 0;
     get_int2_grad1_u12_ao(dimGrid, dimBlock, 
-                          n_grid1, n_grid2, n_ao, n_nuc, size_bh,
-                          d_r1, d_r2, d_wr2, d_rn, d_aos_data2,
+                          n_grid1_loc0, n_grid2, n_ao, n_nuc, size_bh,
+                          d_r1[dev], d_r2, d_wr2, d_rn, d_aos_data2,
                           d_c_bh, d_m_bh, d_n_bh, d_o_bh,
-                          d_int2_grad1_u12_ao);
-    checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
-    checkCudaErrors(cudaEventElapsedTime(&time_loc, start_loc, stop_loc), "cudaEventElapsedTime", __FILE__, __LINE__);
-    time_tot += time_loc;
-    printf("Ellapsed time for get_int2_grad1_u12_ao = %.3f sec\n", time_loc/1000.0f);
+                          d_int2_grad1_u12_ao_t[dev]);
+    for (dev = 1; dev < num_devices; dev++) {
+        checkCudaErrors(cudaSetDevice(dev), "cudaSetDevice", __FILE__, __LINE__);
+        get_int2_grad1_u12_ao(dimGrid, dimBlock, 
+                              n_grid1_loc1, n_grid2, n_ao, n_nuc, size_bh,
+                              d_r1[dev], d_r2, d_wr2, d_rn, d_aos_data2,
+                              d_c_bh, d_m_bh, d_n_bh, d_o_bh,
+                              d_int2_grad1_u12_ao_t[dev]);
+    }
+
+    for (dev = 0; dev < num_devices; dev++) {
+        checkCudaErrors(cudaSetDevice(dev), "cudaSetDevice", __FILE__, __LINE__);
+        checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
+    }
+
+    // TODO
+    // transpose and send to 0 ===> d_int2_grad1_u12_ao
+    // 0 send to Host          ===> h_int2_grad1_u12_ao
+    //
+    //checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1_send, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
 
 
-    checkCudaErrors(cudaFree(d_r1), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_r2), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_wr2), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_rn), "cudaFree", __FILE__, __LINE__);
+    for (dev = 0; dev < num_devices; dev++) {
+        cudaSetDevice(dev);
 
-    checkCudaErrors(cudaFree(d_aos_data2), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_r2), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_wr2), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_rn), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_aos_data2), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_c_bh), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_m_bh), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_n_bh), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_o_bh), "cudaFree", __FILE__, __LINE__);
 
-    checkCudaErrors(cudaFree(d_c_bh), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_m_bh), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_n_bh), "cudaFree", __FILE__, __LINE__);
-    checkCudaErrors(cudaFree(d_o_bh), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_r1[dev]), "cudaFree", __FILE__, __LINE__);
+        checkCudaErrors(cudaFree(d_int2_grad1_u12_ao_t[dev]), "cudaFree", __FILE__, __LINE__);
+    }
 
     // // //
 
 
 
     // 2-e integral
+    // TODO
+    // prallelize over mo_num * mo_num / num_devices
 
     size_wr1 = n_grid1 * sizeof(double);
     size_aos_r1 = 4 * n_grid1 * n_ao * sizeof(double);
@@ -207,7 +251,6 @@ int cutc_int(int nxBlocks, int nyBlocks, int nzBlocks, int blockxSize, int block
     // transfer data to Host
 
     checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
-    checkCudaErrors(cudaMemcpy(h_int2_grad1_u12_ao, d_int2_grad1_u12_ao, size_int1_send, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaMemcpy(h_int_2e_ao, d_int_2e_ao, size_int2, cudaMemcpyDeviceToHost), "cudaMemcpy", __FILE__, __LINE__);
     checkCudaErrors(cudaEventRecord(stop_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
     checkCudaErrors(cudaEventSynchronize(stop_loc), "cudaEventSynchronize", __FILE__, __LINE__);
