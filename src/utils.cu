@@ -53,3 +53,18 @@ extern "C" void checkCublasErrors(cublasStatus_t status, const char* msg, const 
 
 
 
+// Function to check if P2P is supported between two devices
+extern "C" int checkPeerToPeerSupport(int device1, int device2) {
+    int canAccessPeer = 0;
+    cudaError_t err;
+
+    // Check if device1 can access device2
+    err = cudaDeviceCanAccessPeer(&canAccessPeer, device1, device2);
+    if (err != cudaSuccess) {
+        printf("Error checking peer access: %s\n", cudaGetErrorString(err));
+        return 0;
+    }
+
+    return canAccessPeer;
+}
+

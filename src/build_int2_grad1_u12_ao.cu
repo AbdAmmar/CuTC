@@ -6,11 +6,11 @@
 #include "long_range_integ.cuh"
 #include "utils.cuh"
 
-extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
-                                      int n_grid1, int n_grid2, int n_ao, int n_nuc, int size_bh,
-                                      double *r1, double *r2, double *wr2, double *rn, double *aos_data2,
-                                      double *c_bh, int *m_bh, int *n_bh, int *o_bh, 
-                                      double *int2_grad1_u12_ao) {
+extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock, int offset_dev,
+                                      int n_grid1_dev, int n_grid2, int n_ao, int n_nuc, int size_bh,
+                                      double * r1, double * r2, double * wr2, double * rn, double * aos_data2,
+                                      double * c_bh, int * m_bh, int * n_bh, int * o_bh, 
+                                      double * int2_grad1_u12_ao) {
 
 
     int n_ao2;
@@ -22,8 +22,8 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
     double n_tmp;
 
-    double *int_fct_long_range;
-    double *grad1_u12;
+    double * int_fct_long_range;
+    double * grad1_u12;
 
     double alpha, beta;
 
@@ -69,14 +69,14 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
 
     n_tmp = 0.125 * (sqrt((double)(n_ao2*n_ao2) + 8.0*(double)free_mem) - (double)n_ao2);
-    if(n_tmp < 1.0*n_grid1) {
+    if(n_tmp < 1.0*n_grid1_dev) {
         n_grid1_pass = (int) n_tmp;
     } else {
-        n_grid1_pass = n_grid1;
+        n_grid1_pass = n_grid1_dev;
     }
 
-    n_grid1_rest = (int) fmod(1.0 * n_grid1, 1.0 * n_grid1_pass);
-    n1_pass = (int) ((n_grid1 - n_grid1_rest) / n_grid1_pass);
+    n_grid1_rest = (int) fmod(1.0 * n_grid1_dev, 1.0 * n_grid1_pass);
+    n1_pass = (int) ((n_grid1_dev - n_grid1_rest) / n_grid1_pass);
 
     printf("n_grid1_pass = %d\n", n_grid1_pass);
     printf("n_grid1_rest = %d\n", n_grid1_rest);
@@ -145,7 +145,7 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
-                mm = n_ao2 * (ii + m * n_grid1);
+                mm = offset_dev + n_ao2 * (ii + m * n_grid1_dev);
                 kk = kk0 * m;
 
                 checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
@@ -198,7 +198,7 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
-                mm = n_ao2 * (ii + m * n_grid1);
+                mm = offset_dev + n_ao2 * (ii + m * n_grid1_dev);
                 kk = kk0 * m;
 
                 checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
@@ -257,7 +257,7 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
-                mm = n_ao2 * (ii + m * n_grid1);
+                mm = offset_dev + n_ao2 * (ii + m * n_grid1_dev);
                 kk = kk0 * m;
 
                 checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);
@@ -308,7 +308,7 @@ extern "C" void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
             checkCudaErrors(cudaDeviceSynchronize(), "cudaDeviceSynchronize", __FILE__, __LINE__);
 
             for (m = 0; m < 4; m++) {
-                mm = n_ao2 * (ii + m * n_grid1);
+                mm = offset_dev + n_ao2 * (ii + m * n_grid1_dev);
                 kk = kk0 * m;
 
                 checkCudaErrors(cudaEventRecord(start_loc, 0), "cudaEventRecord", __FILE__, __LINE__);

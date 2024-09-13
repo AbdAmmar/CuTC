@@ -31,9 +31,9 @@ __device__ double powd_int(double a, int b) {
 __global__ void cutc_int_bh_kernel(int ii0, int n_grid1_eff, int n_grid1_tot,
                                    int jj0, int n_grid2_eff, int n_grid2_tot,
                                    int n_nuc, int size_bh,
-                                   double *r1, double *r2, double *rn, 
-                                   double *c_bh, int *m_bh, int *n_bh, int *o_bh,
-                                   double *grad1_u12) {
+                                   double * r1, double * r2, double * rn, 
+                                   double * c_bh, int * m_bh, int * n_bh, int * o_bh,
+                                   double * grad1_u12) {
 
     /*
         grad1_u12[1] =      [grad1 u(r1,r2)]_x1
