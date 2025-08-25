@@ -1,6 +1,11 @@
 #ifndef CUTC_NO
-
 #define CUTC_NO
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <cuda_runtime.h>
 
 /* ERROR HANDLING */
 
@@ -68,5 +73,9 @@ extern void trans_inplace(double * data, int size);
 
 extern void trans_pqst_psqt_inplace(int size, double * data);
 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

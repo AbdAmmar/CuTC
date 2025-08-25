@@ -72,7 +72,22 @@ $(MAIN_OBJ): $(MAIN_SRC)
 
 
 
-.PHONY: clean
+TEST_SRC = test/smoke_test.c
+TEST_OBJ = $(BLD_DIR)/smoke_test.o
+TEST_TARGET = $(BIN_DIR)/smoke_test
+
+.PHONY: clean test
+
+test: $(TEST_TARGET)
+	@echo "Running smoke test..."
+	@$(TEST_TARGET)
+
+$(TEST_TARGET): $(TEST_OBJ) $(TC_LIBS)
+	$(CC) $(CFLAGS) $< -o $@ -L$(BLD_DIR) -lcutcint $(CUDA_LIBS) -Wl,-rpath,$(BLD_DIR)
+
+$(TEST_OBJ): $(TEST_SRC) $(INC_DIR)/cutc_int.h
+	$(CC) $(CFLAGS) -c $< -o $@ -I$(INC_DIR)
+
 clean:
 	rm -f $(BLD_DIR)/*.o $(BLD_DIR)/*.so $(BLD_DIR)/*.mod $(BIN_DIR)/*
 

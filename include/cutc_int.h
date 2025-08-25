@@ -1,6 +1,12 @@
 #ifndef CUTC_INT
 #define CUTC_INT
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <cuda_runtime.h>
+
 extern void checkCudaErrors(cudaError_t err, const char * msg, const char * file, int line);
 extern void checkCublasErrors(cublasStatus_t status, const char * msg, const char * file, int line);
 
@@ -13,5 +19,9 @@ extern void get_int2_grad1_u12_ao(dim3 dimGrid, dim3 dimBlock,
 
 extern void get_int_2e_ao(int n_grid1, int n_ao, double * wr1, double * aos_data1,
                           double * int2_grad1_u12_ao, double * tc_int_2e_ao);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
